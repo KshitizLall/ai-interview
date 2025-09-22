@@ -8,12 +8,16 @@ import { useWebSocketContext } from "@/components/websocket-provider"
 
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Download, FileText, Moon, Plus, RotateCcw, Sun, Briefcase, Sparkles, Wifi, WifiOff, Clock } from "lucide-react"
+import { Download, FileText, Moon, Plus, RotateCcw, Sun, Briefcase, Sparkles, Wifi, WifiOff, Clock, User, CreditCard, BarChart3 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { useEffect, useState, useCallback } from "react"
 import { apiService } from "@/lib/api-service"
+import { useSession, signIn, signOut } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 
 export default function HomePage() {
+  const { data: session, status } = useSession()
+  const router = useRouter()
   const [isDark, setIsDark] = useState(false)
   const [titleAnimationComplete, setTitleAnimationComplete] = useState(false)
   const [resumeFile, setResumeFile] = useState<File | null>(null)
@@ -122,18 +126,44 @@ export default function HomePage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleNewSession}>
-              <Plus className="w-4 h-4 mr-2" />
-              New Session
-            </Button>
-            <Button variant="outline" size="sm">
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Load Session
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => handleExportPDF()}>
-              <Download className="w-4 h-4 mr-2" />
-              Export PDF
-            </Button>
+            {session ? (
+              <>
+                <Button variant="outline" size="sm" onClick={() => router.push('/dashboard')}>
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  Dashboard
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleNewSession}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  New Session
+                </Button>
+                <Button variant="outline" size="sm">
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Load Session
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => handleExportPDF()}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Export PDF
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => router.push('/pricing')}>
+                  <CreditCard className="w-4 h-4 mr-2" />
+                  {session.user.subscriptionPlan || 'FREE'}
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => signOut()}>
+                  <User className="w-4 h-4 mr-2" />
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" size="sm" onClick={() => signIn()}>
+                  <User className="w-4 h-4 mr-2" />
+                  Sign In
+                </Button>
+                <Button size="sm" onClick={() => router.push('/auth/signup')}>
+                  Get Started
+                </Button>
+              </>
+            )}
             <Button variant="ghost" size="sm" onClick={toggleTheme}>
               {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>
@@ -142,6 +172,26 @@ export default function HomePage() {
       </header>
 
       <div className="container mx-auto px-4 py-6">
+        {/* Show sign-up prompt for unauthenticated users */}
+        {!session && status !== 'loading' && (
+          <div className="mb-8 p-6 bg-primary/5 border border-primary/20 rounded-lg">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold mb-2">Ready to ace your next interview?</h2>
+              <p className="text-muted-foreground mb-4">
+                Sign up for free to save your sessions, track progress, and get personalized insights.
+              </p>
+              <div className="flex gap-2 justify-center">
+                <Button onClick={() => router.push('/auth/signup')}>
+                  Get Started Free
+                </Button>
+                <Button variant="outline" onClick={() => signIn()}>
+                  Sign In
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Desktop: Split View, Mobile: Stacked with Tabs */}
         <div className="lg:grid lg:grid-cols-2 lg:gap-6 lg:h-[calc(100vh-120px)]">
           {/* Left Pane - Inputs */}
