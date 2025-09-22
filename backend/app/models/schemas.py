@@ -37,6 +37,11 @@ class Question(BaseModel):
     answer: Optional[str] = None
     created_at: datetime = datetime.now()
 
+class GenerationOptions(BaseModel):
+    mode: GenerationMode
+    count: int = 10
+    include_answers: bool = False
+
 class QuestionGenerationRequest(BaseModel):
     resume_text: Optional[str] = None
     job_description: Optional[str] = None

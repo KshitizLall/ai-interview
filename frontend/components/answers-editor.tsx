@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Eye, EyeOff, Save, Clock, Lightbulb, FileText, Wand2, RotateCcw, Copy, Check } from "lucide-react"
+import { Eye, EyeOff, Save, Clock, Lightbulb, FileText, Wand2, RotateCcw, Copy, Check, Wifi, WifiOff } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { generateAnswerTemplate, type AnswerTemplate } from "@/lib/answer-templates"
+import { useWebSocketContext } from "./websocket-provider"
 
 interface AnswersEditorProps {
   questions: any[]
@@ -28,23 +29,37 @@ export function AnswersEditor({ questions, answers, setAnswers }: AnswersEditorP
   const [copied, setCopied] = useState(false)
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const { saveAnswer, isConnected } = useWebSocketContext()
 
-  // Auto-save functionality
+  // Auto-save functionality with WebSocket integration
   useEffect(() => {
     if (!selectedQuestion || currentAnswer === (answers[selectedQuestion] || "")) return
 
     setAutoSaveStatus("saving")
     const timeoutId = setTimeout(() => {
+      // Update local state immediately
       setAnswers({
         ...answers,
         [selectedQuestion]: currentAnswer,
       })
-      setAutoSaveStatus("saved")
+
+      // Send via WebSocket if connected, otherwise just update local state
+      if (isConnected) {
+        const success = saveAnswer(selectedQuestion, currentAnswer)
+        if (success) {
+          setAutoSaveStatus("saved")
+        } else {
+          setAutoSaveStatus("idle")
+        }
+      } else {
+        setAutoSaveStatus("saved")
+      }
+      
       setTimeout(() => setAutoSaveStatus("idle"), 2000)
     }, 800)
 
     return () => clearTimeout(timeoutId)
-  }, [currentAnswer, selectedQuestion, answers, setAnswers])
+  }, [currentAnswer, selectedQuestion, answers, setAnswers, saveAnswer, isConnected])
 
   // Load answer when question changes
   useEffect(() => {
@@ -210,8 +225,14 @@ export function AnswersEditor({ questions, answers, setAnswers }: AnswersEditorP
                     )}
                     {autoSaveStatus === "saved" && (
                       <span className="text-xs text-green-600 flex items-center gap-1">
-                        <Save className="w-3 h-3" />
-                        Saved
+                        {isConnected ? <Wifi className="w-3 h-3" /> : <Save className="w-3 h-3" />}
+                        {isConnected ? "Synced" : "Saved"}
+                      </span>
+                    )}
+                    {!isConnected && autoSaveStatus === "idle" && (
+                      <span className="text-xs text-yellow-600 flex items-center gap-1">
+                        <WifiOff className="w-3 h-3" />
+                        Offline
                       </span>
                     )}
                   </div>

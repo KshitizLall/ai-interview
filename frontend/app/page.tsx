@@ -3,10 +3,14 @@
 import { FileUploadZone } from "@/components/file-upload-zone"
 import { QuestionsList } from "@/components/questions-list"
 import { SavedQuestions } from "@/components/saved-questions"
+import { ConnectionStatus } from "@/components/connection-status"
+import { useWebSocketContext } from "@/components/websocket-provider"
+
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Download, FileText, Moon, Plus, RotateCcw, Sun, Briefcase, Sparkles } from "lucide-react"
-import { useEffect, useState } from "react"
+import { Download, FileText, Moon, Plus, RotateCcw, Sun, Briefcase, Sparkles, Wifi, WifiOff, Clock } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { useEffect, useState, useCallback } from "react"
 import { apiService } from "@/lib/api-service"
 
 export default function HomePage() {
@@ -20,6 +24,36 @@ export default function HomePage() {
   const [savedQuestions, setSavedQuestions] = useState<any[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
   const [activeTab, setActiveTab] = useState("questions")
+  
+  // WebSocket integration
+  const { isConnected, progressUpdate } = useWebSocketContext()
+
+  // Handle progress completion
+  useEffect(() => {
+    if (progressUpdate?.stage === 'completed') {
+      setIsGenerating(false)
+    }
+  }, [progressUpdate])
+
+  // Listen for WebSocket events
+  useEffect(() => {
+    const handleQuestionsGenerated = (event: CustomEvent) => {
+      setQuestions(event.detail || [])
+      setIsGenerating(false)
+    }
+
+    const handleAnswerSaved = (event: CustomEvent) => {
+      console.log('Answer saved:', event.detail)
+    }
+
+    window.addEventListener('questionsGenerated', handleQuestionsGenerated as EventListener)
+    window.addEventListener('answerSaved', handleAnswerSaved as EventListener)
+    
+    return () => {
+      window.removeEventListener('questionsGenerated', handleQuestionsGenerated as EventListener)
+      window.removeEventListener('answerSaved', handleAnswerSaved as EventListener)
+    }
+  }, [])
 
   useEffect(() => {
     // Check for saved theme preference
@@ -51,7 +85,7 @@ export default function HomePage() {
   }
 
   const handleExportPDF = async () => {
-    if (questions.length === 0) {
+    if (!questions || questions.length === 0) {
       alert('No questions to export')
       return
     }
@@ -84,6 +118,7 @@ export default function HomePage() {
             <h1 className="text-xl font-semibold">
               <TypewriterText text="AI Interview Prep" onComplete={() => setTitleAnimationComplete(true)} />
             </h1>
+            <ConnectionStatus size="sm" />
           </div>
 
           <div className="flex items-center gap-2">
@@ -204,7 +239,7 @@ function TypewriterText({ text, onComplete }: { text: string; onComplete?: () =>
 }
 
 // Generation Controls Component
-function GenerationButtons({
+function GenerationControls({
   resumeText,
   jobDescription,
   isGenerating,
@@ -220,6 +255,7 @@ function GenerationButtons({
   setAnswers?: (answers: Record<string, string>) => void
 }) {
   const [error, setError] = useState<string | null>(null)
+  const { generateQuestions, isConnected, progressUpdate } = useWebSocketContext()
 
   const handleGeneration = async (mode: 'resume' | 'jd' | 'combined') => {
     if (isGenerating) return
@@ -228,42 +264,91 @@ function GenerationButtons({
     setIsGenerating(true)
 
     try {
-      const response = await apiService.generateQuestions({
-        resume_text: mode === 'jd' ? undefined : resumeText,
-        job_description: mode === 'resume' ? undefined : jobDescription,
-        mode,
-        question_count: 10,
-        include_answers: mode === 'combined',
-      })
-
-      setQuestions(response.questions)
-
-      if (mode === 'combined' && setAnswers) {
-        const answersMap: Record<string, string> = {}
-        response.questions.forEach(q => {
-          if (q.answer) {
-            answersMap[q.id] = q.answer
+      if (isConnected) {
+        // Use WebSocket for real-time generation
+        const success = generateQuestions({
+          resume_text: mode === 'jd' ? '' : resumeText,
+          job_description: mode === 'resume' ? '' : jobDescription,
+          options: {
+            mode,
+            count: 10,
+            include_answers: mode === 'combined',
           }
         })
-        setAnswers(answersMap)
+
+        if (!success) {
+          throw new Error('Failed to send generation request via WebSocket')
+        }
+      } else {
+        // Fallback to HTTP API
+        const response = await apiService.generateQuestions({
+          resume_text: mode === 'jd' ? undefined : resumeText,
+          job_description: mode === 'resume' ? undefined : jobDescription,
+          mode,
+          question_count: 10,
+          include_answers: mode === 'combined',
+        })
+
+        setQuestions(response.questions)
+
+        if (mode === 'combined' && setAnswers) {
+          const answersMap: Record<string, string> = {}
+          response.questions.forEach(q => {
+            if (q.answer) {
+              answersMap[q.id] = q.answer
+            }
+          })
+          setAnswers(answersMap)
+        }
+        setIsGenerating(false)
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to generate questions")
-    } finally {
       setIsGenerating(false)
     }
   }
 
+  // Handle WebSocket question generation completion
+  useEffect(() => {
+    if (progressUpdate?.stage === 'completed') {
+      setIsGenerating(false)
+    }
+  }, [progressUpdate, setIsGenerating])
+
   return (
     <div className="space-y-4 p-4 border rounded-lg">
-      <h3 className="font-semibold flex items-center gap-2">
-        <FileText className="w-4 h-4" />
-        Generate Questions
-      </h3>
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold flex items-center gap-2">
+          <FileText className="w-4 h-4" />
+          Generate Questions
+        </h3>
+        {!isConnected && (
+          <Badge variant="outline" className="text-xs">
+            <WifiOff className="w-3 h-3 mr-1" />
+            Offline Mode
+          </Badge>
+        )}
+      </div>
       
       {error && (
         <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
           <span className="text-sm text-destructive">{error}</span>
+        </div>
+      )}
+
+      {/* Progress indicator */}
+      {progressUpdate && isGenerating && (
+        <div className="space-y-2 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">{progressUpdate.message}</span>
+            <span className="text-sm text-muted-foreground">{progressUpdate.progress}%</span>
+          </div>
+          <div className="w-full bg-muted rounded-full h-2">
+            <div
+              className="bg-primary h-2 rounded-full transition-all duration-300"
+              style={{ width: `${progressUpdate.progress}%` }}
+            />
+          </div>
         </div>
       )}
 
@@ -273,7 +358,11 @@ function GenerationButtons({
           disabled={!resumeText?.trim() || isGenerating}
           className="w-full justify-start"
         >
-          <FileText className="w-4 h-4 mr-2" />
+          {isGenerating ? (
+            <Clock className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <FileText className="w-4 h-4 mr-2" />
+          )}
           Generate from Resume
         </Button>
 
@@ -282,7 +371,11 @@ function GenerationButtons({
           disabled={!jobDescription?.trim() || isGenerating}
           className="w-full justify-start"
         >
-          <Briefcase className="w-4 h-4 mr-2" />
+          {isGenerating ? (
+            <Clock className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Briefcase className="w-4 h-4 mr-2" />
+          )}
           Generate from Job Description
         </Button>
 
@@ -291,7 +384,11 @@ function GenerationButtons({
           disabled={!resumeText?.trim() || !jobDescription?.trim() || isGenerating}
           className="w-full justify-start"
         >
-          <Sparkles className="w-4 h-4 mr-2" />
+          {isGenerating ? (
+            <Clock className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Sparkles className="w-4 h-4 mr-2" />
+          )}
           Generate Combined Analysis
         </Button>
       </div>
@@ -328,7 +425,7 @@ function InputsPane({
       </div>
 
       <div className="lg:sticky lg:bottom-0 bg-background/80 backdrop-blur-sm border-t border-border pt-4">
-        <GenerationButtons 
+        <GenerationControls 
           resumeText={resumeText}
           jobDescription={jobDescription}
           isGenerating={isGenerating}
@@ -363,12 +460,12 @@ function OutputsPane({
           <h3 className="font-medium">Interview Preparation Progress</h3>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground">
-              {answeredCount} of {questions.length} answered
+              {answeredCount} of {questions?.length || 0} answered
             </span>
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-auto">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="questions">Questions & Answers</TabsTrigger>
-                <TabsTrigger value="saved">Saved ({savedQuestions.length})</TabsTrigger>
+                <TabsTrigger value="saved">Saved ({savedQuestions?.length || 0})</TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
@@ -376,7 +473,7 @@ function OutputsPane({
         <div className="w-full bg-muted rounded-full h-2">
           <div
             className="bg-primary h-2 rounded-full transition-all duration-300"
-            style={{ width: `${questions.length > 0 ? (answeredCount / questions.length) * 100 : 0}%` }}
+            style={{ width: `${questions?.length > 0 ? (answeredCount / questions.length) * 100 : 0}%` }}
           />
         </div>
       </div>

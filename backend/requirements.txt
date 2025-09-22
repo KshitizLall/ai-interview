@@ -11,3 +11,4 @@ aiofiles==23.2.1
 pydantic==2.5.0
 pydantic-settings==2.0.3
 requests==2.31.0
+websockets==12.0
