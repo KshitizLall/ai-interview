@@ -292,7 +292,7 @@ export function QuestionsList({ questions, savedQuestions, setSavedQuestions, an
 
                     {/* AI Options */}
                     {showAiOptions[question.id] && (
-                      <Card className="border-primary/20 bg-primary/5">
+                      <Card className="border-primary/20 bg-primary/5 glass-card-subtle">
                         <CardContent className="p-3 space-y-3">
                           <div className="flex items-center gap-2">
                             <Sparkles className="w-4 h-4 text-primary" />

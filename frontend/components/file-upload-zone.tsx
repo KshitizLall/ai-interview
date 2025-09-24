@@ -122,7 +122,7 @@ export function FileUploadZone({
   }
 
   return (
-    <Card className="relative overflow-hidden">
+    <Card className="relative overflow-hidden glass-card-subtle border-border/30">
       <CardHeader className="pb-3">
         <CardTitle className="text-base md:text-lg flex items-center justify-between">
           {title}

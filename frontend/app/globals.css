@@ -121,11 +121,74 @@
   * {
     @apply border-border outline-ring/50;
   }
+
+  /* Subtle glass gradient background with animated blobs */
   body {
     @apply bg-background text-foreground;
     /* Improved font sizing for mobile */
     font-size: 14px;
     line-height: 1.5;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 80% 40%, rgba(168, 85, 247, 0.02) 0%, transparent 50%),
+      radial-gradient(circle at 40% 80%, rgba(14, 165, 233, 0.025) 0%, transparent 50%),
+      radial-gradient(circle at 90% 10%, rgba(34, 197, 94, 0.02) 0%, transparent 50%),
+      radial-gradient(circle at 10% 90%, rgba(239, 68, 68, 0.015) 0%, transparent 50%);
+    animation: subtleFloat 20s ease-in-out infinite;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background:
+      linear-gradient(135deg,
+        rgba(255, 255, 255, 0.02) 0%,
+        rgba(255, 255, 255, 0.005) 25%,
+        rgba(255, 255, 255, 0.02) 50%,
+        rgba(255, 255, 255, 0.005) 75%,
+        rgba(255, 255, 255, 0.02) 100%
+      );
+    backdrop-filter: blur(0.5px);
+    animation: glassShimmer 15s ease-in-out infinite alternate;
+  }
+
+  /* Dark mode background adjustments */
+  .dark body::before {
+    background:
+      radial-gradient(circle at 25% 25%, rgba(99, 102, 241, 0.04) 0%, transparent 50%),
+      radial-gradient(circle at 75% 30%, rgba(168, 85, 247, 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 45% 75%, rgba(14, 165, 233, 0.035) 0%, transparent 50%),
+      radial-gradient(circle at 85% 15%, rgba(34, 197, 94, 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 15% 85%, rgba(239, 68, 68, 0.025) 0%, transparent 50%);
+  }
+
+  .dark body::after {
+    background:
+      linear-gradient(135deg,
+        rgba(255, 255, 255, 0.01) 0%,
+        rgba(255, 255, 255, 0.002) 25%,
+        rgba(255, 255, 255, 0.01) 50%,
+        rgba(255, 255, 255, 0.002) 75%,
+        rgba(255, 255, 255, 0.01) 100%
+      );
+    backdrop-filter: blur(0.3px);
   }
 
   /* Better mobile scrolling */
@@ -186,6 +249,40 @@
       padding-right: 2rem;
     }
   }
+
+  /* Glass morphism utility classes */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .glass-card-subtle {
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .dark .glass-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .dark .glass-card-subtle {
+    background: rgba(255, 255, 255, 0.015);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+  }
+
+  /* Enhance existing components with subtle glass effects */
+  .bg-card {
+    background: rgba(var(--card), 0.8);
+    backdrop-filter: blur(8px);
+  }
+
+  .bg-muted\/50 {
+    background: rgba(var(--muted), 0.3);
+    backdrop-filter: blur(6px);
+  }
 }
 
 @keyframes fadeInUp {
@@ -217,5 +314,35 @@
   }
   50% {
     box-shadow: 0 0 0 8px rgba(var(--primary), 0);
+  }
+}
+
+@keyframes subtleFloat {
+  0%, 100% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+  }
+  25% {
+    transform: translate(0.5%, -0.5%) scale(1.02) rotate(0.5deg);
+  }
+  50% {
+    transform: translate(-0.3%, 0.3%) scale(0.98) rotate(-0.3deg);
+  }
+  75% {
+    transform: translate(0.2%, 0.2%) scale(1.01) rotate(0.2deg);
+  }
+}
+
+@keyframes glassShimmer {
+  0% {
+    opacity: 0.3;
+    transform: translateX(0);
+  }
+  50% {
+    opacity: 0.5;
+    transform: translateX(0.1%);
+  }
+  100% {
+    opacity: 0.3;
+    transform: translateX(0);
   }
 }

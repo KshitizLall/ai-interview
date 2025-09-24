@@ -70,6 +70,12 @@ export interface PDFExportRequest {
   answers: Record<string, string>
   resume_filename?: string
   job_title?: string
+  export_options?: {
+    include_analytics?: boolean
+    include_tips?: boolean
+    color_scheme?: 'professional' | 'minimal' | 'modern'
+    page_layout?: 'compact' | 'spacious' | 'executive'
+  }
 }
 
 export interface PDFExportResponse {
