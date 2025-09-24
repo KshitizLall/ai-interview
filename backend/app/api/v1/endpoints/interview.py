@@ -8,6 +8,8 @@ from app.models.schemas import (
     QuestionGenerationResponse,
     AnswerGenerationRequest,
     AnswerGenerationResponse,
+    BulkAnswerGenerationRequest,
+    BulkAnswerGenerationResponse,
     PDFExportRequest,
     PDFExportResponse,
     ErrorResponse
@@ -37,23 +39,28 @@ async def generate_questions(request: QuestionGenerationRequest):
     Generate interview questions based on resume and/or job description
     """
     start_time = time.time()
-    
+
     try:
         questions = await openai_service.generate_questions(
             resume_text=request.resume_text,
             job_description=request.job_description,
             question_count=request.question_count,
-            include_answers=request.include_answers
+            include_answers=request.include_answers,
+            question_types=request.question_types,
+            difficulty_levels=request.difficulty_levels,
+            focus_areas=request.focus_areas,
+            company_name=request.company_name,
+            position_level=request.position_level
         )
-        
+
         generation_time = time.time() - start_time
-        
+
         return QuestionGenerationResponse(
             questions=questions,
             generation_time=generation_time,
             total_questions=len(questions)
         )
-        
+
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -65,26 +72,54 @@ async def generate_answer(request: AnswerGenerationRequest):
     Generate a sample answer for a specific interview question
     """
     start_time = time.time()
-    
+
     try:
         answer = await openai_service.generate_answer(
             question=request.question,
             resume_text=request.resume_text,
             job_description=request.job_description
         )
-        
+
         generation_time = time.time() - start_time
-        
+
         return AnswerGenerationResponse(
             question=request.question,
             answer=answer,
             generation_time=generation_time
         )
-        
+
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Answer generation failed: {str(e)}")
+
+@router.post("/generate-bulk-answers", response_model=BulkAnswerGenerationResponse)
+async def generate_bulk_answers(request: BulkAnswerGenerationRequest):
+    """
+    Generate sample answers for multiple interview questions at once
+    """
+    start_time = time.time()
+
+    try:
+        answers = await openai_service.generate_bulk_answers(
+            questions=request.questions,
+            resume_text=request.resume_text,
+            job_description=request.job_description,
+            answer_style=request.answer_style
+        )
+
+        generation_time = time.time() - start_time
+
+        return BulkAnswerGenerationResponse(
+            answers=answers,
+            generation_time=generation_time,
+            total_answers=len(answers)
+        )
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Bulk answer generation failed: {str(e)}")
 
 @router.post("/export-pdf", response_model=PDFExportResponse)
 async def export_pdf(request: PDFExportRequest):
@@ -98,7 +133,7 @@ async def export_pdf(request: PDFExportRequest):
             resume_filename=request.resume_filename,
             job_title=request.job_title
         )
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"PDF export failed: {str(e)}")
 

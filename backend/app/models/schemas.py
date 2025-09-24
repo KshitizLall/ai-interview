@@ -7,11 +7,17 @@ class QuestionType(str, Enum):
     TECHNICAL = "technical"
     BEHAVIORAL = "behavioral"
     EXPERIENCE = "experience"
+    PROBLEM_SOLVING = "problem-solving"
+    LEADERSHIP = "leadership"
+    SITUATIONAL = "situational"
+    COMPANY_CULTURE = "company-culture"
+    GENERAL = "general"
 
 class QuestionDifficulty(str, Enum):
     BEGINNER = "beginner"
     INTERMEDIATE = "intermediate"
     ADVANCED = "advanced"
+    EXPERT = "expert"
 
 class GenerationMode(str, Enum):
     RESUME = "resume"
@@ -41,6 +47,11 @@ class GenerationOptions(BaseModel):
     mode: GenerationMode
     count: int = 10
     include_answers: bool = False
+    question_types: Optional[List[QuestionType]] = None
+    difficulty_levels: Optional[List[QuestionDifficulty]] = None
+    focus_areas: Optional[List[str]] = None
+    company_name: Optional[str] = None
+    position_level: Optional[str] = None
 
 class QuestionGenerationRequest(BaseModel):
     resume_text: Optional[str] = None
@@ -48,6 +59,11 @@ class QuestionGenerationRequest(BaseModel):
     mode: GenerationMode
     question_count: int = 10
     include_answers: bool = False
+    question_types: Optional[List[QuestionType]] = None
+    difficulty_levels: Optional[List[QuestionDifficulty]] = None
+    focus_areas: Optional[List[str]] = None
+    company_name: Optional[str] = None
+    position_level: Optional[str] = None
 
 class QuestionGenerationResponse(BaseModel):
     questions: List[Question]
@@ -64,6 +80,17 @@ class AnswerGenerationResponse(BaseModel):
     question: str
     answer: str
     generation_time: float
+
+class BulkAnswerGenerationRequest(BaseModel):
+    questions: List[Question]
+    resume_text: Optional[str] = None
+    job_description: Optional[str] = None
+    answer_style: Optional[str] = "professional"  # professional, conversational, detailed, concise
+
+class BulkAnswerGenerationResponse(BaseModel):
+    answers: Dict[str, str]  # question_id -> answer
+    generation_time: float
+    total_answers: int
 
 # PDF Export Models
 class PDFExportRequest(BaseModel):

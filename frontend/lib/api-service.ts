@@ -5,8 +5,8 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/a
 export interface Question {
   id: string
   question: string
-  type: 'technical' | 'behavioral' | 'experience'
-  difficulty: 'beginner' | 'intermediate' | 'advanced'
+  type: 'technical' | 'behavioral' | 'experience' | 'problem-solving' | 'leadership' | 'situational' | 'company-culture' | 'general'
+  difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert'
   relevance_score: number
   answer?: string
   created_at: string
@@ -27,6 +27,11 @@ export interface QuestionGenerationRequest {
   mode: 'resume' | 'jd' | 'combined'
   question_count: number
   include_answers: boolean
+  question_types?: string[]
+  difficulty_levels?: string[]
+  focus_areas?: string[]
+  company_name?: string
+  position_level?: string
 }
 
 export interface QuestionGenerationResponse {
@@ -45,6 +50,19 @@ export interface AnswerGenerationResponse {
   question: string
   answer: string
   generation_time: number
+}
+
+export interface BulkAnswerGenerationRequest {
+  questions: Question[]
+  resume_text?: string
+  job_description?: string
+  answer_style?: 'professional' | 'conversational' | 'detailed' | 'concise'
+}
+
+export interface BulkAnswerGenerationResponse {
+  answers: Record<string, string>  // question_id -> answer
+  generation_time: number
+  total_answers: number
 }
 
 export interface PDFExportRequest {
@@ -119,6 +137,23 @@ class APIService {
     return response.json()
   }
 
+  async generateBulkAnswers(request: BulkAnswerGenerationRequest): Promise<BulkAnswerGenerationResponse> {
+    const response = await fetch(`${this.baseURL}/interview/generate-bulk-answers`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.detail || 'Bulk answer generation failed')
+    }
+
+    return response.json()
+  }
+
   async exportPDF(request: PDFExportRequest): Promise<PDFExportResponse> {
     const response = await fetch(`${this.baseURL}/interview/export-pdf`, {
       method: 'POST',
@@ -138,7 +173,7 @@ class APIService {
 
   async healthCheck(): Promise<{ status: string; service: string }> {
     const response = await fetch(`${this.baseURL}/interview/health`)
-    
+
     if (!response.ok) {
       throw new Error('Health check failed')
     }
