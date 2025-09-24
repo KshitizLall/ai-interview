@@ -124,7 +124,7 @@ export function FileUploadZone({
   return (
     <Card className="relative overflow-hidden">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center justify-between">
+        <CardTitle className="text-base md:text-lg flex items-center justify-between">
           {title}
           {text && (
             <Button
@@ -143,7 +143,7 @@ export function FileUploadZone({
         {!isTextArea && (
           <div
             className={cn(
-              "relative border-2 border-dashed rounded-lg p-8 text-center transition-all duration-300",
+              "relative border-2 border-dashed rounded-lg p-4 md:p-8 text-center transition-all duration-300",
               isDragOver
                 ? "border-primary bg-primary/5 scale-105 shadow-lg animate-pulse-glow"
                 : "border-muted-foreground/25 hover:border-muted-foreground/50",
@@ -163,32 +163,32 @@ export function FileUploadZone({
               disabled={isProcessing}
             />
 
-            <div className="flex flex-col items-center gap-3">
+            <div className="flex flex-col items-center gap-2 md:gap-3">
               {isProcessing ? (
-                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                <div className="w-8 h-8 md:w-12 md:h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
               ) : error ? (
-                <div className="w-12 h-12 bg-destructive/10 rounded-full flex items-center justify-center">
-                  <AlertCircle className="w-6 h-6 text-destructive" />
+                <div className="w-8 h-8 md:w-12 md:h-12 bg-destructive/10 rounded-full flex items-center justify-center">
+                  <AlertCircle className="w-4 h-4 md:w-6 md:h-6 text-destructive" />
                 </div>
               ) : uploadSuccess ? (
-                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center animate-scale-in">
-                  <Check className="w-6 h-6 text-white" />
+                <div className="w-8 h-8 md:w-12 md:h-12 bg-green-500 rounded-full flex items-center justify-center animate-scale-in">
+                  <Check className="w-4 h-4 md:w-6 md:h-6 text-white" />
                 </div>
               ) : (
                 <Upload
-                  className={cn("w-12 h-12 transition-colors", isDragOver ? "text-primary" : "text-muted-foreground")}
+                  className={cn("w-8 h-8 md:w-12 md:h-12 transition-colors", isDragOver ? "text-primary" : "text-muted-foreground")}
                 />
               )}
 
               <div>
-                <p className="font-medium">
+                <p className="font-medium text-sm md:text-base">
                   {isProcessing
                     ? "Processing file..."
                     : error
                       ? "Upload failed"
                       : "Drop your file here or click to browse"}
                 </p>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-xs md:text-sm text-muted-foreground mt-1">
                   {error ? error : `Supports ${accept.replace(/\./g, "").toUpperCase()} files (max 10MB)`}
                 </p>
               </div>
@@ -212,22 +212,22 @@ export function FileUploadZone({
 
         {file && (
           <div className="flex items-center justify-between p-3 bg-muted rounded-lg animate-fade-in-up">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                <FileText className="w-5 h-5 text-primary" />
+            <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
+              <div className="w-8 h-8 md:w-10 md:h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                <FileText className="w-4 h-4 md:w-5 md:h-5 text-primary" />
               </div>
-              <div>
-                <p className="font-medium text-sm">{file.name}</p>
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-sm truncate">{file.name}</p>
                 <p className="text-xs text-muted-foreground">
                   {formatFileSize(file.size)} • {file.type || "Unknown type"}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={replaceFile}>
+            <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+              <Button variant="ghost" size="sm" onClick={replaceFile} className="text-xs px-2 md:px-3">
                 Replace
               </Button>
-              <Button variant="ghost" size="sm" onClick={clearFile}>
+              <Button variant="ghost" size="sm" onClick={clearFile} className="p-1 md:p-2">
                 <X className="w-4 h-4" />
               </Button>
             </div>

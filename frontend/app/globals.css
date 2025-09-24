@@ -123,6 +123,35 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Improved font sizing for mobile */
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* Better mobile scrolling */
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Improve touch targets on mobile */
+  button,
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Responsive typography */
+  @media (min-width: 640px) {
+    body {
+      font-size: 16px;
+    }
+
+    button,
+    [role="button"] {
+      min-height: auto;
+      min-width: auto;
+    }
   }
 
   /* Added custom animations for smooth interactions */
@@ -136,6 +165,26 @@
 
   .animate-pulse-glow {
     animation: pulseGlow 2s ease-in-out infinite;
+  }
+
+  /* Responsive container improvements */
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .container {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .container {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
   }
 }
 

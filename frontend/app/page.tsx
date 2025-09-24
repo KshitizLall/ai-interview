@@ -113,40 +113,80 @@ export default function HomePage() {
     <div className="min-h-screen bg-background text-foreground">
       {/* Top Bar */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <FileText className="w-4 h-4 text-primary-foreground" />
+        <div className="container mx-auto px-4 py-3 md:py-4">
+          {/* Desktop Layout */}
+          <div className="hidden md:flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <FileText className="w-4 h-4 text-primary-foreground" />
+              </div>
+              <h1 className="text-xl font-semibold">
+                <TypewriterText text="AI Interview Prep" onComplete={() => setTitleAnimationComplete(true)} />
+              </h1>
+              <ConnectionStatus size="sm" />
             </div>
-            <h1 className="text-xl font-semibold">
-              <TypewriterText text="AI Interview Prep" onComplete={() => setTitleAnimationComplete(true)} />
-            </h1>
-            <ConnectionStatus size="sm" />
+
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={handleNewSession}>
+                <Plus className="w-4 h-4 mr-2" />
+                New Session
+              </Button>
+              <Button variant="outline" size="sm">
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Load Session
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => handleExportPDF()}>
+                <Download className="w-4 h-4 mr-2" />
+                Export PDF
+              </Button>
+              <Button variant="ghost" size="sm" onClick={toggleTheme}>
+                {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </Button>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleNewSession}>
-              <Plus className="w-4 h-4 mr-2" />
-              New Session
-            </Button>
-            <Button variant="outline" size="sm">
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Load Session
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => handleExportPDF()}>
-              <Download className="w-4 h-4 mr-2" />
-              Export PDF
-            </Button>
-            <Button variant="ghost" size="sm" onClick={toggleTheme}>
-              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </Button>
+          {/* Mobile Layout */}
+          <div className="md:hidden space-y-3">
+            {/* First Row: Logo, Title, Theme Toggle */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center">
+                  <FileText className="w-3.5 h-3.5 text-primary-foreground" />
+                </div>
+                <h1 className="text-lg font-semibold truncate">
+                  <TypewriterText text="AI Interview Prep" onComplete={() => setTitleAnimationComplete(true)} />
+                </h1>
+              </div>
+              <div className="flex items-center gap-2">
+                <ConnectionStatus size="sm" />
+                <Button variant="ghost" size="sm" onClick={toggleTheme}>
+                  {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                </Button>
+              </div>
+            </div>
+
+            {/* Second Row: Action Buttons */}
+            <div className="flex flex-wrap gap-2 justify-center">
+              <Button variant="outline" size="sm" onClick={handleNewSession} className="flex-1 min-w-0">
+                <Plus className="w-4 h-4 mr-1 flex-shrink-0" />
+                <span className="truncate">New</span>
+              </Button>
+              <Button variant="outline" size="sm" className="flex-1 min-w-0">
+                <RotateCcw className="w-4 h-4 mr-1 flex-shrink-0" />
+                <span className="truncate">Load</span>
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => handleExportPDF()} className="flex-1 min-w-0">
+                <Download className="w-4 h-4 mr-1 flex-shrink-0" />
+                <span className="truncate">Export</span>
+              </Button>
+            </div>
           </div>
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-4 md:py-6">
         {/* Desktop: Split View, Mobile: Stacked with Tabs */}
-        <div className="lg:grid lg:grid-cols-2 lg:gap-6 lg:h-[calc(100vh-120px)]">
+        <div className="lg:grid lg:grid-cols-2 lg:gap-6 lg:h-[calc(100vh-140px)]">
           {/* Left Pane - Inputs */}
           <div className="lg:block hidden">
             <InputsPane
@@ -181,12 +221,12 @@ export default function HomePage() {
           {/* Mobile: Tabbed Interface */}
           <div className="lg:hidden col-span-2">
             <Tabs defaultValue="inputs" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="inputs">Upload & Generate</TabsTrigger>
-                <TabsTrigger value="outputs">Questions & Answers</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 mb-4">
+                <TabsTrigger value="inputs" className="text-sm">Upload & Generate</TabsTrigger>
+                <TabsTrigger value="outputs" className="text-sm">Questions & Answers</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="inputs" className="mt-4">
+              <TabsContent value="inputs" className="mt-0 space-y-4">
                 <InputsPane
                   resumeFile={resumeFile}
                   setResumeFile={setResumeFile}
@@ -200,7 +240,7 @@ export default function HomePage() {
                 />
               </TabsContent>
 
-              <TabsContent value="outputs" className="mt-4">
+              <TabsContent value="outputs" className="mt-0 space-y-4">
                 <OutputsPane
                   questions={questions}
                   answers={answers}
@@ -333,22 +373,22 @@ function OutputsPane({
   return (
     <div className="h-full flex flex-col">
       {/* Progress Header */}
-      <div className="mb-4 p-4 bg-muted/50 rounded-lg">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="font-medium">Interview Preparation Progress</h3>
-          <div className="flex items-center gap-4">
+      <div className="mb-4 p-3 md:p-4 bg-muted/50 rounded-lg">
+        <div className="space-y-3 md:space-y-0 md:flex md:items-center md:justify-between">
+          <h3 className="font-medium text-sm md:text-base">Interview Preparation Progress</h3>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4">
             <span className="text-sm text-muted-foreground">
               {answeredCount} of {questions?.length || 0} answered
             </span>
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-auto">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="questions">Questions & Answers</TabsTrigger>
-                <TabsTrigger value="saved">Saved ({savedQuestions?.length || 0})</TabsTrigger>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full sm:w-auto">
+              <TabsList className="grid w-full grid-cols-2 sm:w-auto">
+                <TabsTrigger value="questions" className="text-xs md:text-sm">Questions & Answers</TabsTrigger>
+                <TabsTrigger value="saved" className="text-xs md:text-sm">Saved ({savedQuestions?.length || 0})</TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
         </div>
-        <div className="w-full bg-muted rounded-full h-2">
+        <div className="w-full bg-muted rounded-full h-2 mt-2">
           <div
             className="bg-primary h-2 rounded-full transition-all duration-300"
             style={{ width: `${questions?.length > 0 ? (answeredCount / questions.length) * 100 : 0}%` }}

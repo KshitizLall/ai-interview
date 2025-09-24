@@ -80,15 +80,15 @@ export function QuestionsList({ questions, savedQuestions, setSavedQuestions, an
 
   const handleAnswerChange = (questionId: string, value: string) => {
     setAnswerInputs(prev => ({ ...prev, [questionId]: value }))
-    
+
     // Clear existing timeout
     if (savingTimeouts[questionId]) {
       clearTimeout(savingTimeouts[questionId])
     }
-    
+
     // Set saving status
     setAutoSaveStatus(prev => ({ ...prev, [questionId]: "saving" }))
-    
+
     // Auto-save after 800ms of no typing
     const timeout = setTimeout(() => {
       setAnswers({ ...answers, [questionId]: value })
@@ -97,7 +97,7 @@ export function QuestionsList({ questions, savedQuestions, setSavedQuestions, an
         setAutoSaveStatus(prev => ({ ...prev, [questionId]: "idle" }))
       }, 2000)
     }, 800)
-    
+
     setSavingTimeouts(prev => ({ ...prev, [questionId]: timeout }))
   }
 
@@ -123,17 +123,17 @@ export function QuestionsList({ questions, savedQuestions, setSavedQuestions, an
         resume_text: resumeText,
         job_description: jobDescription,
       })
-      
+
       // Set the generated answer
       setAnswerInputs(prev => ({ ...prev, [questionId]: response.answer }))
-      
+
       // Auto-save the generated answer
       setAnswers({ ...answers, [questionId]: response.answer })
       setAutoSaveStatus(prev => ({ ...prev, [questionId]: "saved" }))
-      
+
       // Hide AI options after generation
       setShowAiOptions(prev => ({ ...prev, [questionId]: false }))
-      
+
       setTimeout(() => {
         setAutoSaveStatus(prev => ({ ...prev, [questionId]: "idle" }))
       }, 2000)
@@ -197,17 +197,17 @@ export function QuestionsList({ questions, savedQuestions, setSavedQuestions, an
                 <CardHeader className="pb-3 cursor-pointer hover:bg-muted/20 transition-colors">
                   <div className="flex items-start justify-between">
                     <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-start gap-2">
                         {isExpanded ? (
-                          <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                          <ChevronDown className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                         ) : (
-                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                          <ChevronRight className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                         )}
-                        <p className="text-sm leading-relaxed text-left">{question.question}</p>
+                        <p className="text-sm leading-relaxed text-left pr-2">{question.question}</p>
                       </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
+
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <div className="flex flex-wrap items-center gap-1 md:gap-2">
                           <Badge variant="secondary" className="text-xs">
                             {question.type}
                           </Badge>
@@ -222,12 +222,13 @@ export function QuestionsList({ questions, savedQuestions, setSavedQuestions, an
                           {hasAnswer && (
                             <Badge variant="default" className="text-xs">
                               <MessageSquare className="w-3 h-3 mr-1" />
-                              {getWordCount(answers[question.id])} words
+                              <span className="hidden sm:inline">{getWordCount(answers[question.id])} words</span>
+                              <span className="sm:hidden">{getWordCount(answers[question.id])}</span>
                             </Badge>
                           )}
                         </div>
-                        
-                        <div className={cn("w-2 h-2 rounded-full", hasAnswer ? "bg-green-500" : "bg-muted")} />
+
+                        <div className={cn("w-2 h-2 rounded-full flex-shrink-0", hasAnswer ? "bg-green-500" : "bg-muted")} />
                       </div>
                     </div>
                   </div>
@@ -238,7 +239,7 @@ export function QuestionsList({ questions, savedQuestions, setSavedQuestions, an
                 <CardContent className="pt-0 space-y-4">
                   {/* Answer Editor */}
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-0">
                       <div className="flex items-center gap-2">
                         <h4 className="text-sm font-medium">Your Answer</h4>
                         {saveStatus === "saving" && (
@@ -254,12 +255,12 @@ export function QuestionsList({ questions, savedQuestions, setSavedQuestions, an
                           </span>
                         )}
                       </div>
-                      
-                      <div className="flex items-center gap-3">
+
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                         <div className="text-xs text-muted-foreground">
                           {wordCount} words • ~{estimatedTime} min to speak
                         </div>
-                        
+
                         <div className="flex items-center gap-1">
                           <Button
                             variant="outline"
@@ -274,12 +275,14 @@ export function QuestionsList({ questions, savedQuestions, setSavedQuestions, an
                             {aiGeneratingStatus[question.id] ? (
                               <>
                                 <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                                Generating...
+                                <span className="hidden sm:inline">Generating...</span>
+                                <span className="sm:hidden">Gen...</span>
                               </>
                             ) : (
                               <>
                                 <Sparkles className="w-3 h-3 mr-1" />
-                                Use AI
+                                <span className="hidden sm:inline">Use AI</span>
+                                <span className="sm:hidden">AI</span>
                               </>
                             )}
                           </Button>
@@ -295,7 +298,7 @@ export function QuestionsList({ questions, savedQuestions, setSavedQuestions, an
                             <Sparkles className="w-4 h-4 text-primary" />
                             <span className="text-sm font-medium">AI Answer Generator</span>
                           </div>
-                          
+
                           <div className="space-y-2">
                             <Label className="text-xs">Answer Style</Label>
                             <Select
@@ -314,7 +317,7 @@ export function QuestionsList({ questions, savedQuestions, setSavedQuestions, an
                             </Select>
                           </div>
 
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                             <Button
                               size="sm"
                               onClick={(e) => {
@@ -327,16 +330,18 @@ export function QuestionsList({ questions, savedQuestions, setSavedQuestions, an
                               {aiGeneratingStatus[question.id] ? (
                                 <>
                                   <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                                  Generating...
+                                  <span className="hidden sm:inline">Generating...</span>
+                                  <span className="sm:hidden">Gen...</span>
                                 </>
                               ) : (
                                 <>
                                   <Sparkles className="w-3 h-3 mr-1" />
-                                  Generate Answer
+                                  <span className="hidden sm:inline">Generate Answer</span>
+                                  <span className="sm:hidden">Generate</span>
                                 </>
                               )}
                             </Button>
-                            
+
                             <Button
                               variant="ghost"
                               size="sm"
@@ -376,7 +381,7 @@ Tips:
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex items-center justify-between pt-2 border-t">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pt-2 border-t gap-3 sm:gap-0">
                     <div className="flex items-center gap-1">
                       <Button
                         variant="ghost"
@@ -388,30 +393,36 @@ Tips:
                         className={cn("transition-all duration-200", isSaved && "text-primary")}
                       >
                         {isSaved ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
+                        <span className="ml-1 hidden sm:inline">
+                          {isSaved ? "Saved" : "Save"}
+                        </span>
                       </Button>
 
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={(e) => {
                           e.stopPropagation()
                           copyQuestion(question.question)
                         }}
+                        className="hidden sm:inline-flex"
                       >
                         <Copy className="w-4 h-4" />
+                        <span className="ml-1">Copy</span>
                       </Button>
 
                       {currentAnswer && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={(e) => {
                             e.stopPropagation()
                             copyAnswer(currentAnswer)
                           }}
                         >
                           <Copy className="w-4 h-4 mr-1" />
-                          Answer
+                          <span className="hidden sm:inline">Answer</span>
+                          <span className="sm:hidden">Copy</span>
                         </Button>
                       )}
                     </div>
@@ -426,6 +437,7 @@ Tips:
                       className="text-destructive hover:text-destructive"
                     >
                       <Trash2 className="w-4 h-4" />
+                      <span className="ml-1 hidden sm:inline">Delete</span>
                     </Button>
                   </div>
                 </CardContent>

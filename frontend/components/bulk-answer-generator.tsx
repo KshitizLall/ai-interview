@@ -128,11 +128,11 @@ export function BulkAnswerGenerator({
   return (
     <Card className={className}>
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Sparkles className="w-5 h-5" />
+        <CardTitle className="text-base md:text-lg flex items-center gap-2">
+          <Sparkles className="w-4 h-4 md:w-5 md:h-5" />
           Bulk Answer Generation
         </CardTitle>
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
           <span className="flex items-center gap-1">
             <CheckCircle className="w-4 h-4 text-green-500" />
             {answeredCount} answered
@@ -154,7 +154,7 @@ export function BulkAnswerGenerator({
 
         {isGenerating && (
           <div className="space-y-2 p-3 bg-primary/5 border border-primary/20 rounded-lg">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <span className="text-sm font-medium">Generating AI answers...</span>
               <span className="text-sm text-muted-foreground">{Math.round(progress)}%</span>
             </div>
@@ -196,11 +196,11 @@ export function BulkAnswerGenerator({
             </Select>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <Button
               onClick={() => handleBulkGeneration('unanswered')}
               disabled={isGenerating || unansweredQuestions.length === 0}
-              className="flex-1"
+              className="flex-1 text-sm"
             >
               {isGenerating ? (
                 <>
@@ -210,7 +210,9 @@ export function BulkAnswerGenerator({
               ) : (
                 <>
                   <Sparkles className="w-4 h-4 mr-2" />
-                  Fill Missing Answers ({unansweredQuestions.length})
+                  <span className="hidden sm:inline">Fill Missing Answers</span>
+                  <span className="sm:hidden">Fill Missing</span>
+                  <span className="ml-1">({unansweredQuestions.length})</span>
                 </>
               )}
             </Button>
@@ -219,6 +221,7 @@ export function BulkAnswerGenerator({
               onClick={() => handleBulkGeneration('all')}
               disabled={isGenerating || questions.length === 0}
               variant="outline"
+              className="flex-1 text-sm"
             >
               {isGenerating ? (
                 <>
@@ -228,7 +231,9 @@ export function BulkAnswerGenerator({
               ) : (
                 <>
                   <Sparkles className="w-4 h-4 mr-2" />
-                  Regenerate All ({questions.length})
+                  <span className="hidden sm:inline">Regenerate All</span>
+                  <span className="sm:hidden">Regenerate</span>
+                  <span className="ml-1">({questions.length})</span>
                 </>
               )}
             </Button>

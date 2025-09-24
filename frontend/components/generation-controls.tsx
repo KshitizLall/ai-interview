@@ -200,7 +200,7 @@ export function GenerationControls({
                 )}
                 {/* Quick generation buttons when collapsed */}
                 {!isExpanded && (
-                  <div className="flex gap-1">
+                  <div className="flex flex-wrap gap-1">
                     <Button
                       size="sm"
                       variant="outline"
@@ -216,7 +216,8 @@ export function GenerationControls({
                       ) : (
                         <>
                           <FileText className="w-3 h-3 mr-1" />
-                          Resume
+                          <span className="hidden sm:inline">Resume</span>
+                          <span className="sm:hidden">R</span>
                         </>
                       )}
                     </Button>
@@ -236,7 +237,8 @@ export function GenerationControls({
                       ) : (
                         <>
                           <Briefcase className="w-3 h-3 mr-1" />
-                          JD
+                          <span className="hidden sm:inline">JD</span>
+                          <span className="sm:hidden">J</span>
                         </>
                       )}
                     </Button>
@@ -255,7 +257,8 @@ export function GenerationControls({
                       ) : (
                         <>
                           <Sparkles className="w-3 h-3 mr-1" />
-                          Both
+                          <span className="hidden sm:inline">Both</span>
+                          <span className="sm:hidden">B</span>
                         </>
                       )}
                     </Button>
@@ -291,7 +294,7 @@ export function GenerationControls({
             )}
 
             {/* Compact Basic Options */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label className="text-sm">Questions</Label>
                 <Select value={questionCount.toString()} onValueChange={(value) => setQuestionCount(parseInt(value))}>
@@ -348,17 +351,17 @@ export function GenerationControls({
                 {/* Compact Question Types */}
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">Types</Label>
-                  <div className="flex flex-wrap gap-1">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-1">
                     {QUESTION_TYPES.map((type) => (
                       <Button
                         key={type.value}
                         variant={selectedQuestionTypes.includes(type.value) ? "default" : "outline"}
                         size="sm"
-                        className="h-6 px-2 text-xs"
+                        className="h-6 px-2 text-xs justify-start"
                         onClick={() => handleTypeToggle(type.value)}
                       >
                         <span className="mr-1">{type.icon}</span>
-                        {type.label}
+                        <span className="truncate">{type.label}</span>
                       </Button>
                     ))}
                   </div>
@@ -367,7 +370,7 @@ export function GenerationControls({
                 {/* Compact Difficulty Levels */}
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">Difficulty</Label>
-                  <div className="flex flex-wrap gap-1">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1">
                     {DIFFICULTY_LEVELS.map((level) => (
                       <Button
                         key={level.value}
@@ -383,7 +386,7 @@ export function GenerationControls({
                 </div>
 
                 {/* Compact Context Information */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <Label className="text-xs">Company</Label>
                     <Input
@@ -424,7 +427,7 @@ export function GenerationControls({
             </Collapsible>
 
             {/* Full Generation Buttons */}
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <Button
                 size="sm"
                 onClick={() => handleGeneration('resume')}
@@ -436,7 +439,8 @@ export function GenerationControls({
                 ) : (
                   <>
                     <FileText className="w-3 h-3 mr-1" />
-                    Resume
+                    <span className="hidden sm:inline">Resume</span>
+                    <span className="sm:hidden">From Resume</span>
                   </>
                 )}
               </Button>
@@ -453,7 +457,8 @@ export function GenerationControls({
                 ) : (
                   <>
                     <Briefcase className="w-3 h-3 mr-1" />
-                    Job Desc
+                    <span className="hidden sm:inline">Job Desc</span>
+                    <span className="sm:hidden">From Job Description</span>
                   </>
                 )}
               </Button>
@@ -462,14 +467,15 @@ export function GenerationControls({
                 size="sm"
                 onClick={() => handleGeneration('combined')}
                 disabled={!resumeText?.trim() || !jobDescription?.trim() || isGenerating}
-                className="text-xs"
+                className="text-xs sm:col-span-1 col-span-1"
               >
                 {isGenerating ? (
                   <Clock className="w-3 h-3 animate-spin" />
                 ) : (
                   <>
                     <Sparkles className="w-3 h-3 mr-1" />
-                    Both
+                    <span className="hidden sm:inline">Both</span>
+                    <span className="sm:hidden">From Both</span>
                   </>
                 )}
               </Button>
