@@ -1,4 +1,4 @@
-# AI Interview Prep - Copilot Instructions
+# InterviewBot - Copilot Instructions
 
 ## Project Overview
 This is an AI-powered interview preparation application with a Next.js frontend and placeholder backend. The app helps users generate interview questions from resumes and job descriptions, practice answers, and export results.

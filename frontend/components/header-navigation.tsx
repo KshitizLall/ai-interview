@@ -22,7 +22,7 @@ export function HeaderNavigation() {
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <FileText className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="text-xl font-semibold">AI Interview Prep</span>
+            <span className="text-xl font-semibold">InterviewBot</span>
           </Link>
 
           {/* Desktop Navigation */}

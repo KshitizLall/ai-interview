@@ -14,7 +14,7 @@ load_dotenv()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    print("🚀 AI Interview Prep API starting up...")
+    print("🚀 InterviewBot API starting up...")
     
     # Create upload directory if it doesn't exist
     os.makedirs("uploads", exist_ok=True)
@@ -23,11 +23,11 @@ async def lifespan(app: FastAPI):
     yield
     
     # Shutdown
-    print("🔄 AI Interview Prep API shutting down...")
+    print("🔄 InterviewBot API shutting down...")
 
 # Create FastAPI app
 app = FastAPI(
-    title="AI Interview Prep API",
+    title="InterviewBot API",
     description="Backend API for AI-powered interview preparation application",
     version="1.0.0",
     lifespan=lifespan
@@ -51,7 +51,7 @@ app.include_router(api_router, prefix="/api/v1")
 @app.get("/")
 async def root():
     return {
-        "message": "AI Interview Prep API",
+        "message": "InterviewBot API",
         "version": "1.0.0",
         "status": "running"
     }
