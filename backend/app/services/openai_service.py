@@ -9,7 +9,7 @@ class OpenAIService:
     def __init__(self):
         self.client = OpenAI(api_key=settings.OPENAI_API_KEY)
         self.model = settings.OPENAI_MODEL
-    
+
     async def generate_questions(
         self,
         resume_text: Optional[str] = None,
@@ -18,21 +18,21 @@ class OpenAIService:
         include_answers: bool = False
     ) -> List[Question]:
         """Generate interview questions based on resume and/or job description"""
-        
+
         start_time = time.time()
-        
+
         # Build context based on available inputs
         context_parts = []
         if resume_text:
             context_parts.append(f"Resume/CV:\n{resume_text}")
         if job_description:
             context_parts.append(f"Job Description:\n{job_description}")
-        
+
         if not context_parts:
             raise ValueError("Either resume_text or job_description must be provided")
-        
+
         context = "\n\n".join(context_parts)
-        
+
         # Create the prompt
         if include_answers:
             system_prompt = f"""You are an expert interview coach. Generate {question_count} relevant interview questions based on the provided context.
@@ -91,13 +91,13 @@ Context:
                 temperature=0.7,
                 max_tokens=3000
             )
-            
+
             content = response.choices[0].message.content
             if not content:
                 raise ValueError("No content received from OpenAI")
-            
+
             print(f"DEBUG: OpenAI response content: {content}")  # Debug logging
-            
+
             # Clean the content (remove any markdown formatting)
             content = content.strip()
             if content.startswith('```json'):
@@ -105,14 +105,14 @@ Context:
             if content.endswith('```'):
                 content = content[:-3]
             content = content.strip()
-            
+
             # Parse the JSON response
             try:
                 questions_data = json.loads(content)
             except json.JSONDecodeError as e:
                 print(f"DEBUG: Failed to parse JSON. Content was: {repr(content)}")
                 raise ValueError(f"Failed to parse OpenAI response as JSON: {e}")
-            
+
             # Convert to Question objects
             questions = []
             for i, q_data in enumerate(questions_data):
@@ -125,13 +125,13 @@ Context:
                     answer=q_data.get('answer') if include_answers else None
                 )
                 questions.append(question)
-            
+
             return questions
-            
+
         except Exception as e:
             print(f"DEBUG: OpenAI API error: {e}")
             raise ValueError(f"OpenAI API error: {e}")
-    
+
     async def generate_answer(
         self,
         question: str,
@@ -139,16 +139,18 @@ Context:
         job_description: Optional[str] = None
     ) -> str:
         """Generate a sample answer for a specific question"""
-        
+
         # Build context
         context_parts = []
         if resume_text:
             context_parts.append(f"Resume/CV:\n{resume_text}")
         if job_description:
             context_parts.append(f"Job Description:\n{job_description}")
-        
+
         context = "\n\n".join(context_parts) if context_parts else ""
-        
+
+        context_section = f"Context to consider:\n{context}" if context else ""
+
         system_prompt = f"""You are an expert interview coach. Generate a professional, well-structured answer to the interview question.
 
 Instructions:
@@ -160,7 +162,7 @@ Instructions:
 
 Question: {question}
 
-{f"Context to consider:\n{context}" if context else ""}
+{context_section}
 
 Provide only the answer, no additional formatting or labels."""
 
@@ -173,13 +175,13 @@ Provide only the answer, no additional formatting or labels."""
                 temperature=0.7,
                 max_tokens=500
             )
-            
+
             content = response.choices[0].message.content
             if not content:
                 raise ValueError("No content received from OpenAI")
-            
+
             return content.strip()
-            
+
         except Exception as e:
             raise ValueError(f"OpenAI API error: {e}")
 
