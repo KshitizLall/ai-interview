@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { OptimizedButton } from "@/components/ui/optimized-button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
@@ -106,64 +107,73 @@ export function GenerationControls({
   const handleGeneration = async (mode: 'resume' | 'jd' | 'combined') => {
     if (isGenerating) return
 
+    // Immediately update UI state to provide feedback
     setError(null)
     setIsGenerating(true)
 
-    try {
-      const request = {
-        resume_text: mode === 'jd' ? undefined : resumeText,
-        job_description: mode === 'resume' ? undefined : jobDescription,
-        mode,
-        question_count: questionCount,
-        include_answers: includeAnswers,
-        question_types: selectedQuestionTypes.length > 0 ? selectedQuestionTypes : undefined,
-        difficulty_levels: selectedDifficulties.length > 0 ? selectedDifficulties : undefined,
-        focus_areas: focusAreas.trim() ? focusAreas.split(',').map(s => s.trim()) : undefined,
-        company_name: companyName.trim() || undefined,
-        position_level: positionLevel || undefined
-      }
-
-      if (isConnected && generateQuestions) {
-        // Use WebSocket for real-time generation
-        const success = generateQuestions({
-          resume_text: request.resume_text || '',
-          job_description: request.job_description || '',
-          options: {
-            mode,
-            count: questionCount,
-            include_answers: includeAnswers,
-            question_types: request.question_types,
-            difficulty_levels: request.difficulty_levels,
-            focus_areas: request.focus_areas,
-            company_name: request.company_name,
-            position_level: request.position_level
-          }
-        })
-
-        if (!success) {
-          throw new Error('Failed to send generation request via WebSocket')
+    // Use setTimeout to allow UI to update before heavy operations
+    setTimeout(async () => {
+      try {
+        const request = {
+          resume_text: mode === 'jd' ? undefined : resumeText,
+          job_description: mode === 'resume' ? undefined : jobDescription,
+          mode,
+          question_count: questionCount,
+          include_answers: includeAnswers,
+          question_types: selectedQuestionTypes.length > 0 ? selectedQuestionTypes : undefined,
+          difficulty_levels: selectedDifficulties.length > 0 ? selectedDifficulties : undefined,
+          focus_areas: focusAreas.trim() ? focusAreas.split(',').map(s => s.trim()) : undefined,
+          company_name: companyName.trim() || undefined,
+          position_level: positionLevel || undefined
         }
-      } else {
-        // Fallback to HTTP API
-        const response = await apiService.generateQuestions(request)
 
-        setQuestions(response.questions)
-
-        if (includeAnswers && setAnswers) {
-          const answersMap: Record<string, string> = {}
-          response.questions.forEach(q => {
-            if (q.answer) {
-              answersMap[q.id] = q.answer
+        if (isConnected && generateQuestions) {
+          // Use WebSocket for real-time generation
+          const success = generateQuestions({
+            resume_text: request.resume_text || '',
+            job_description: request.job_description || '',
+            options: {
+              mode,
+              count: questionCount,
+              include_answers: includeAnswers,
+              question_types: request.question_types,
+              difficulty_levels: request.difficulty_levels,
+              focus_areas: request.focus_areas,
+              company_name: request.company_name,
+              position_level: request.position_level
             }
           })
-          setAnswers(answersMap)
+
+          if (!success) {
+            throw new Error('Failed to send generation request via WebSocket')
+          }
+        } else {
+          // Fallback to HTTP API with chunked processing
+          const response = await apiService.generateQuestions(request)
+
+          // Use requestAnimationFrame for smooth UI updates
+          requestAnimationFrame(() => {
+            setQuestions(response.questions)
+
+            if (includeAnswers && setAnswers) {
+              const answersMap: Record<string, string> = {}
+              response.questions.forEach(q => {
+                if (q.answer) {
+                  answersMap[q.id] = q.answer
+                }
+              })
+              setAnswers(answersMap)
+            }
+            setIsGenerating(false)
+          })
         }
-        setIsGenerating(false)
+      } catch (err) {
+        requestAnimationFrame(() => {
+          setError(err instanceof Error ? err.message : "Failed to generate questions")
+          setIsGenerating(false)
+        })
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to generate questions")
-      setIsGenerating(false)
-    }
+    }, 0)
   }
 
   return (
@@ -194,67 +204,58 @@ export function GenerationControls({
                 {/* Quick generation buttons when collapsed */}
                 {!isExpanded && (
                   <div className="flex flex-wrap gap-1">
-                    <Button
+                    <OptimizedButton
                       size="sm"
                       variant="outline"
                       onClick={(e) => {
                         e.stopPropagation()
                         handleGeneration('resume')
                       }}
-                      disabled={!resumeText?.trim() || isGenerating}
+                      disabled={!resumeText?.trim()}
+                      loading={isGenerating}
+                      preventBlocking={true}
+                      debounceMs={300}
                       className="h-7 px-2 text-xs"
                     >
-                      {isGenerating ? (
-                        <Clock className="w-3 h-3 animate-spin" />
-                      ) : (
-                        <>
-                          <FileText className="w-3 h-3 mr-1" />
-                          <span className="hidden sm:inline">Resume</span>
-                          <span className="sm:hidden">R</span>
-                        </>
-                      )}
-                    </Button>
+                      <FileText className="w-3 h-3 mr-1" />
+                      <span className="hidden sm:inline">Resume</span>
+                      <span className="sm:hidden">R</span>
+                    </OptimizedButton>
 
-                    <Button
+                    <OptimizedButton
                       size="sm"
                       variant="outline"
                       onClick={(e) => {
                         e.stopPropagation()
                         handleGeneration('jd')
                       }}
-                      disabled={!jobDescription?.trim() || isGenerating}
+                      disabled={!jobDescription?.trim()}
+                      loading={isGenerating}
+                      preventBlocking={true}
+                      debounceMs={300}
                       className="h-7 px-2 text-xs"
                     >
-                      {isGenerating ? (
-                        <Clock className="w-3 h-3 animate-spin" />
-                      ) : (
-                        <>
-                          <Briefcase className="w-3 h-3 mr-1" />
-                          <span className="hidden sm:inline">JD</span>
-                          <span className="sm:hidden">J</span>
-                        </>
-                      )}
-                    </Button>
+                      <Briefcase className="w-3 h-3 mr-1" />
+                      <span className="hidden sm:inline">JD</span>
+                      <span className="sm:hidden">J</span>
+                    </OptimizedButton>
 
-                    <Button
+                    <OptimizedButton
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation()
                         handleGeneration('combined')
                       }}
-                      disabled={!resumeText?.trim() || !jobDescription?.trim() || isGenerating}
+                      disabled={!resumeText?.trim() || !jobDescription?.trim()}
+                      loading={isGenerating}
+                      preventBlocking={true}
+                      debounceMs={300}
                       className="h-7 px-2 text-xs"
                     >
-                      {isGenerating ? (
-                        <Clock className="w-3 h-3 animate-spin" />
-                      ) : (
-                        <>
-                          <Sparkles className="w-3 h-3 mr-1" />
-                          <span className="hidden sm:inline">Both</span>
-                          <span className="sm:hidden">B</span>
-                        </>
-                      )}
-                    </Button>
+                      <Sparkles className="w-3 h-3 mr-1" />
+                      <span className="hidden sm:inline">Both</span>
+                      <span className="sm:hidden">B</span>
+                    </OptimizedButton>
                   </div>
                 )}
               </div>
@@ -411,57 +412,48 @@ export function GenerationControls({
 
             {/* Full Generation Buttons */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <Button
+              <OptimizedButton
                 size="sm"
                 onClick={() => handleGeneration('resume')}
-                disabled={!resumeText?.trim() || isGenerating}
+                disabled={!resumeText?.trim()}
+                loading={isGenerating}
+                preventBlocking={true}
+                debounceMs={300}
                 className="text-xs"
               >
-                {isGenerating ? (
-                  <Clock className="w-3 h-3 animate-spin" />
-                ) : (
-                  <>
-                    <FileText className="w-3 h-3 mr-1" />
-                    <span className="hidden sm:inline">Resume</span>
-                    <span className="sm:hidden">From Resume</span>
-                  </>
-                )}
-              </Button>
+                <FileText className="w-3 h-3 mr-1" />
+                <span className="hidden sm:inline">Resume</span>
+                <span className="sm:hidden">From Resume</span>
+              </OptimizedButton>
 
-              <Button
+              <OptimizedButton
                 size="sm"
                 variant="outline"
                 onClick={() => handleGeneration('jd')}
-                disabled={!jobDescription?.trim() || isGenerating}
+                disabled={!jobDescription?.trim()}
+                loading={isGenerating}
+                preventBlocking={true}
+                debounceMs={300}
                 className="text-xs"
               >
-                {isGenerating ? (
-                  <Clock className="w-3 h-3 animate-spin" />
-                ) : (
-                  <>
-                    <Briefcase className="w-3 h-3 mr-1" />
-                    <span className="hidden sm:inline">Job Desc</span>
-                    <span className="sm:hidden">From Job Description</span>
-                  </>
-                )}
-              </Button>
+                <Briefcase className="w-3 h-3 mr-1" />
+                <span className="hidden sm:inline">Job Desc</span>
+                <span className="sm:hidden">From Job Description</span>
+              </OptimizedButton>
 
-              <Button
+              <OptimizedButton
                 size="sm"
                 onClick={() => handleGeneration('combined')}
-                disabled={!resumeText?.trim() || !jobDescription?.trim() || isGenerating}
+                disabled={!resumeText?.trim() || !jobDescription?.trim()}
+                loading={isGenerating}
+                preventBlocking={true}
+                debounceMs={300}
                 className="text-xs sm:col-span-1 col-span-1"
               >
-                {isGenerating ? (
-                  <Clock className="w-3 h-3 animate-spin" />
-                ) : (
-                  <>
-                    <Sparkles className="w-3 h-3 mr-1" />
-                    <span className="hidden sm:inline">Both</span>
-                    <span className="sm:hidden">From Both</span>
-                  </>
-                )}
-              </Button>
+                <Sparkles className="w-3 h-3 mr-1" />
+                <span className="hidden sm:inline">Both</span>
+                <span className="sm:hidden">From Both</span>
+              </OptimizedButton>
             </div>
           </CardContent>
         </CollapsibleContent>
