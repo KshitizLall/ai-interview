@@ -46,7 +46,7 @@
    - **Region**: Same as backend
    - **Branch**: `main`
    - **Root Directory**: `frontend`
-   - **Build Command**: `npm ci --legacy-peer-deps && npm run build`
+   - **Build Command**: `npm install && npm run build`
    - **Start Command**: `npm start`
    - **Plan**: `Starter`
 
