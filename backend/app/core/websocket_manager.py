@@ -1,5 +1,5 @@
 """
-WebSocket Connection Manager for AI Interview Prep API
+WebSocket Connection Manager for InterviewBot API
 
 Handles WebSocket connections, message broadcasting, and connection lifecycle management.
 """

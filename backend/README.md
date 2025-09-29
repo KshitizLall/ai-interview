@@ -1,6 +1,6 @@
-# AI Interview Prep - FastAPI Backend
+# InterviewBot - FastAPI Backend
 
-A robust FastAPI backend for the AI Interview Preparation application that handles file processing, AI question/answer generation, and PDF exports.
+A robust FastAPI backend for the InterviewBot application that handles file processing, AI question/answer generation, and PDF exports.
 
 ## Features
 

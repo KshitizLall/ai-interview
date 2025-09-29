@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Users, Target, Lightbulb, Award } from "lucide-react"
 
 export const metadata: Metadata = {
-  title: "About Us | AI Interview Prep",
+  title: "About Us | InterviewBot",
   description: "Learn about our mission to revolutionize interview preparation with AI-powered tools.",
 }
 
@@ -15,7 +15,7 @@ export default function AboutPage() {
   return (
     <PageLayout>
       <PageHeader
-        title="About AI Interview Prep"
+        title="About InterviewBot"
         description="Empowering professionals with AI-driven interview preparation tools to unlock their career potential."
       />
 
@@ -186,7 +186,7 @@ export default function AboutPage() {
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-4">Ready to Transform Your Interview Game?</h2>
           <p className="text-muted-foreground mb-6">
-            Join thousands of professionals who have successfully prepared for their interviews with AI Interview Prep.
+            Join thousands of professionals who have successfully prepared for their interviews with InterviewBot.
           </p>
           <div className="flex gap-4 justify-center">
             <a

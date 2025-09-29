@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Check, X, Star, Zap, Crown } from "lucide-react"
 
 export const metadata: Metadata = {
-  title: "Pricing | AI Interview Prep",
+  title: "Pricing | InterviewBot",
   description: "Choose the perfect plan for your interview preparation needs. Start free and upgrade as you grow.",
 }
 

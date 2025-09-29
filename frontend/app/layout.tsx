@@ -6,7 +6,7 @@ import { WebSocketProvider } from '@/components/websocket-provider'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'AI Interview Prep',
+  title: 'InterviewBot',
   description: 'AI-powered interview preparation with real-time features',
   generator: 'v0.app',
 }

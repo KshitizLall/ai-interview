@@ -1,4 +1,4 @@
-# AI Interview Prep 🚀
+# InterviewBot 🤖
 
 > AI-powered interview preparation platform with personalized questions, smart analytics, and comprehensive coaching tools.
 
@@ -23,7 +23,7 @@
 
 ## 🎯 Overview
 
-AI Interview Prep is a comprehensive SaaS platform that helps job seekers prepare for interviews using artificial intelligence. The platform generates personalized interview questions based on resumes and job descriptions, provides AI-powered sample answers, tracks performance analytics, and offers mock interview sessions.
+InterviewBot is a comprehensive SaaS platform that helps job seekers prepare for interviews using artificial intelligence. The platform generates personalized interview questions based on resumes and job descriptions, provides AI-powered sample answers, tracks performance analytics, and offers mock interview sessions.
 
 ### 🌟 Key Highlights
 
@@ -115,8 +115,8 @@ AI Interview Prep is a comprehensive SaaS platform that helps job seekers prepar
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/KshitizLall/ai-interview-prep.git
-   cd ai-interview-prep
+   git clone https://github.com/KshitizLall/interviewbot.git
+   cd interviewbot
    ```
 
 2. **Install frontend dependencies**
@@ -187,7 +187,7 @@ AI Interview Prep is a comprehensive SaaS platform that helps job seekers prepar
 ## 📁 Project Structure
 
 ```
-ai-interview-prep/
+interviewbot/
 ├── frontend/                 # Next.js frontend application
 │   ├── app/                 # App router pages
 │   │   ├── api/            # API routes
@@ -316,7 +316,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Documentation**: Check our [docs](./docs) folder
 - **Issues**: Create a GitHub issue for bugs
 - **Feature Requests**: Open a discussion for new features
-- **Email**: support@aiinterviewprep.com (coming soon)
+- **Email**: support@interviewbot.com (coming soon)
 
 ### Support Channels by Plan
 - **Free**: Community GitHub discussions
@@ -330,6 +330,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Built with ❤️ for job seekers worldwide**
 
-[Website](https://aiinterviewprep.com) • [Documentation](./docs) • [Support](https://github.com/KshitizLall/ai-interview-prep/discussions)
+[Website](https://interviewbot.com) • [Documentation](./docs) • [Support](https://github.com/KshitizLall/interviewbot/discussions)
 
 </div>

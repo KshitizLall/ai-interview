@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button"
 import { RotateCcw, DollarSign, Clock, CheckCircle, AlertTriangle, Mail, Calendar } from "lucide-react"
 
 export const metadata: Metadata = {
-  title: "Refund Policy | AI Interview Prep",
-  description: "Learn about our cancellation and refund policy for AI Interview Prep subscriptions.",
+  title: "Refund Policy | InterviewBot",
+  description: "Learn about our cancellation and refund policy for InterviewBot subscriptions.",
 }
 
 export default function RefundPage() {
@@ -162,7 +162,7 @@ export default function RefundPage() {
                       <span className="text-primary font-semibold text-xs">1</span>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Log into your AI Interview Prep account
+                      Log into your InterviewBot account
                     </p>
                   </div>
 
@@ -201,8 +201,8 @@ export default function RefundPage() {
                       <p className="text-sm font-semibold mb-1">Email Support</p>
                       <p className="text-sm text-muted-foreground">
                         Send a cancellation request to:{" "}
-                        <a href="mailto:billing@aiinterviewprep.com" className="text-primary hover:underline">
-                          billing@aiinterviewprep.com
+                        <a href="mailto:billing@interviewbot.com" className="text-primary hover:underline">
+                          billing@interviewbot.com
                         </a>
                       </p>
                     </div>
@@ -407,8 +407,8 @@ export default function RefundPage() {
                   <div className="space-y-1 text-sm">
                     <p>
                       <strong>Email:</strong>{" "}
-                      <a href="mailto:billing@aiinterviewprep.com" className="text-primary hover:underline">
-                        billing@aiinterviewprep.com
+                      <a href="mailto:billing@interviewbot.com" className="text-primary hover:underline">
+                        billing@interviewbot.com
                       </a>
                     </p>
                     <p>
@@ -426,8 +426,8 @@ export default function RefundPage() {
                   <div className="space-y-1 text-sm">
                     <p>
                       <strong>Email:</strong>{" "}
-                      <a href="mailto:support@aiinterviewprep.com" className="text-primary hover:underline">
-                        support@aiinterviewprep.com
+                      <a href="mailto:support@interviewbot.com" className="text-primary hover:underline">
+                        support@interviewbot.com
                       </a>
                     </p>
                     <p><strong>Response Time:</strong> Within 24 hours</p>

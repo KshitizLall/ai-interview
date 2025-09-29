@@ -65,10 +65,10 @@ export default function ContactPage() {
                   General inquiries and support
                 </p>
                 <a
-                  href="mailto:support@aiinterviewprep.com"
+                  href="mailto:support@interviewbot.com"
                   className="text-sm font-medium text-primary hover:underline"
                 >
-                  support@aiinterviewprep.com
+                  support@interviewbot.com
                 </a>
               </CardContent>
             </Card>
@@ -233,7 +233,7 @@ export default function ContactPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  You can start using AI Interview Prep immediately! Simply upload your resume
+                  You can start using InterviewBot immediately! Simply upload your resume
                   or paste a job description to generate personalized interview questions.
                 </p>
               </CardContent>

@@ -7,8 +7,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Shield, Eye, Lock, Users, FileText, Mail } from "lucide-react"
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | AI Interview Prep",
-  description: "Learn how we collect, use, and protect your personal information at AI Interview Prep.",
+  title: "Privacy Policy | InterviewBot",
+  description: "Learn how we collect, use, and protect your personal information at InterviewBot.",
 }
 
 export default function PrivacyPage() {
@@ -361,8 +361,8 @@ export default function PrivacyPage() {
               <div className="space-y-2">
                 <p className="text-sm">
                   <strong>Email:</strong>{" "}
-                  <a href="mailto:privacy@aiinterviewprep.com" className="text-primary hover:underline">
-                    privacy@aiinterviewprep.com
+                  <a href="mailto:privacy@interviewbot.com" className="text-primary hover:underline">
+                    privacy@interviewbot.com
                   </a>
                 </p>
                 <p className="text-sm">

@@ -7,8 +7,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { FileText, Scale, AlertTriangle, Shield, Users, CreditCard } from "lucide-react"
 
 export const metadata: Metadata = {
-  title: "Terms & Conditions | AI Interview Prep",
-  description: "Terms of service and conditions for using AI Interview Prep platform.",
+  title: "Terms & Conditions | InterviewBot",
+  description: "Terms of service and conditions for using InterviewBot platform.",
 }
 
 export default function TermsPage() {
@@ -16,7 +16,7 @@ export default function TermsPage() {
     <PageLayout>
       <PageHeader
         title="Terms & Conditions"
-        description="These terms govern your use of AI Interview Prep. Please read them carefully before using our service."
+        description="These terms govern your use of InterviewBot. Please read them carefully before using our service."
       />
 
       <ContentSection className="space-y-8">
@@ -34,7 +34,7 @@ export default function TermsPage() {
           <Card>
             <CardContent className="pt-6">
               <p className="text-muted-foreground mb-4">
-                By accessing or using AI Interview Prep ("Service"), you agree to be bound by these Terms & Conditions
+                By accessing or using InterviewBot ("Service"), you agree to be bound by these Terms & Conditions
                 ("Terms"). If you disagree with any part of these terms, you may not access the Service.
               </p>
               <p className="text-muted-foreground">
@@ -341,12 +341,12 @@ export default function TermsPage() {
               <div className="space-y-2">
                 <p className="text-sm">
                   <strong>Email:</strong>{" "}
-                  <a href="mailto:legal@aiinterviewprep.com" className="text-primary hover:underline">
-                    legal@aiinterviewprep.com
+                  <a href="mailto:legal@interviewbot.com" className="text-primary hover:underline">
+                    legal@interviewbot.com
                   </a>
                 </p>
                 <p className="text-sm">
-                  <strong>Address:</strong> AI Interview Prep, 123 Innovation Drive, Tech Valley, CA 94025
+                  <strong>Address:</strong> InterviewBot, 123 Innovation Drive, Tech Valley, CA 94025
                 </p>
                 <p className="text-sm">
                   <strong>Phone:</strong>{" "}

@@ -10,7 +10,7 @@ export function Footer() {
           {/* Company Info */}
           <div className="space-y-4">
             <div>
-              <h3 className="text-lg font-semibold">AI Interview Prep</h3>
+              <h3 className="text-lg font-semibold">InterviewBot</h3>
               <p className="text-sm text-muted-foreground">
                 Empowering professionals with AI-driven interview preparation tools.
               </p>
@@ -19,8 +19,8 @@ export function Footer() {
             <div className="space-y-2 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4" />
-                <a href="mailto:support@aiinterviewprep.com" className="hover:text-foreground">
-                  support@aiinterviewprep.com
+                <a href="mailto:support@interviewbot.com" className="hover:text-foreground">
+                  support@interviewbot.com
                 </a>
               </div>
               <div className="flex items-center gap-2">
@@ -118,7 +118,7 @@ export function Footer() {
 
         <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
           <p className="text-sm text-muted-foreground">
-            © 2025 AI Interview Prep. All rights reserved.
+            © 2025 InterviewBot. All rights reserved.
           </p>
           <div className="flex gap-6 text-sm text-muted-foreground">
             <Link href="/privacy" className="hover:text-foreground">

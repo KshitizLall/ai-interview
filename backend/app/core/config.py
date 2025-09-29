@@ -3,8 +3,8 @@ from typing import List
 
 class Settings(BaseSettings):
     # App Settings
-    APP_NAME: str = "AI Interview Prep API"
-    DEBUG: bool = False  # Changed to False for production
+    APP_NAME: str = "InterviewBot API"
+    DEBUG: bool = True
     VERSION: str = "1.0.0"
     
     # CORS Settings - Updated for production
