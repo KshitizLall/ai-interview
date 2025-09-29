@@ -11,7 +11,8 @@ class Settings(BaseSettings):
     ALLOWED_HOSTS: List[str] = [
         "http://localhost:3000", 
         "http://127.0.0.1:3000",
-        "https://ai-interview-prep.onrender.com",  # Add your frontend domain
+        "https://ai-interview-black-gamma.vercel.app",  # Vercel deployment
+        "https://*.vercel.app",  # All Vercel deployments
         "https://*.onrender.com"  # Allow all Render domains for development
     ]
     
