@@ -24,26 +24,19 @@ services:
     name: ai-interview-frontend
     runtime: node
     plan: starter  # Change to 'standard' or higher for production
-    buildCommand: cd frontend && npm ci && npm run build
-    startCommand: cd frontend && npm start
+    buildCommand: cd frontend && npm install && npm run build
+    startCommand: chmod +x start.sh && ./start.sh
     envVars:
       - key: NODE_VERSION
         value: 18.18.0
       - key: NODE_ENV
         value: production
       - key: NEXT_PUBLIC_API_URL
-        fromService:
-          type: web
-          name: ai-interview-backend
-          envVarKey: RENDER_EXTERNAL_URL
         # Manual override format: https://your-backend-service.onrender.com/api/v1
+        sync: false
       - key: NEXT_PUBLIC_WS_URL
         # Will be constructed from backend URL, replace http with ws/wss
-        value: wss://your-backend-service.onrender.com/api/v1/websocket/ws
-    routes:
-      - type: redirect
-        source: /*
-        destination: https://your-custom-domain.com$1
+        sync: false
         
 databases:
   # Optional: Add PostgreSQL database for future features

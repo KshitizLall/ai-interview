@@ -46,7 +46,7 @@
    - **Region**: Same as backend
    - **Branch**: `main`
    - **Root Directory**: `frontend`
-   - **Build Command**: `npm ci && npm run build`
+   - **Build Command**: `npm ci --legacy-peer-deps && npm run build`
    - **Start Command**: `npm start`
    - **Plan**: `Starter`
 
@@ -111,6 +111,13 @@ ALLOWED_HOSTS: List[str] = [
 1. **Python version issues**: Ensure Python 3.11+ in requirements
 2. **Missing dependencies**: Check `requirements-prod.txt` is complete
 3. **Directory issues**: Verify root directory settings
+4. **PostCSS/Tailwind errors**: 
+   - Ensure `@tailwindcss/postcss` is in dependencies, not devDependencies
+   - Use `npm ci --legacy-peer-deps` for compatibility
+5. **Module not found errors**: 
+   - Check all component files exist in `/components` directory
+   - Verify import paths match file structure
+   - Clear build cache with `npm cache clean --force`
 
 ### Runtime Errors
 1. **502 Bad Gateway**: Check port binding (use `$PORT` environment variable)

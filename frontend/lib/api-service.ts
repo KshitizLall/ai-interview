@@ -177,8 +177,8 @@ class APIService {
     return response.json()
   }
 
-  async healthCheck(): Promise<{ status: string; service: string }> {
-    const response = await fetch(`${this.baseURL}/interview/health`)
+  async healthCheck(): Promise<{ status: string; service?: string }> {
+    const response = await fetch(`${this.baseURL.replace('/api/v1', '')}/health`)
 
     if (!response.ok) {
       throw new Error('Health check failed')
@@ -190,7 +190,8 @@ class APIService {
   // Helper method to download PDF
   downloadPDF(downloadUrl: string, filename: string) {
     const link = document.createElement('a')
-    link.href = `http://localhost:8000${downloadUrl}`
+    const baseUrl = this.baseURL.replace('/api/v1', '')
+    link.href = `${baseUrl}${downloadUrl}`
     link.download = filename
     document.body.appendChild(link)
     link.click()
