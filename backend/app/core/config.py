@@ -4,11 +4,16 @@ from typing import List
 class Settings(BaseSettings):
     # App Settings
     APP_NAME: str = "AI Interview Prep API"
-    DEBUG: bool = True
+    DEBUG: bool = False  # Changed to False for production
     VERSION: str = "1.0.0"
     
-    # CORS Settings
-    ALLOWED_HOSTS: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    # CORS Settings - Updated for production
+    ALLOWED_HOSTS: List[str] = [
+        "http://localhost:3000", 
+        "http://127.0.0.1:3000",
+        "https://ai-interview-prep.onrender.com",  # Add your frontend domain
+        "https://*.onrender.com"  # Allow all Render domains for development
+    ]
     
     # OpenAI Settings
     OPENAI_API_KEY: str

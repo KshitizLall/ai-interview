@@ -47,6 +47,7 @@ export function WebSocketProvider({
       ? 'wss://your-api-domain.com/api/v1/websocket/ws'
       : 'ws://localhost:8000/api/v1/websocket/ws',
     sessionId: effectiveSessionId,
+    reconnect: false, // Disable reconnection to prevent constant failed attempts
     onProgressUpdate: (progress) => {
       setProgressUpdate(progress)
     },

@@ -25,10 +25,12 @@ import { Download, FileText, Moon, Sun, Briefcase, Sparkles, Wifi, WifiOff, Cloc
 import { Badge } from "@/components/ui/badge"
 import { useEffect, useState, useCallback } from "react"
 import { apiService } from "@/lib/api-service"
+import { useReducedMotion } from "@/hooks/use-reduced-motion"
 
 export default function HomePage() {
   const [isDark, setIsDark] = useState(false)
   const [titleAnimationComplete, setTitleAnimationComplete] = useState(false)
+  const prefersReducedMotion = useReducedMotion()
   const [resumeFile, setResumeFile] = useState<File | null>(null)
   const [resumeText, setResumeText] = useState("")
   const [jobDescription, setJobDescription] = useState("")
@@ -83,23 +85,30 @@ export default function HomePage() {
   }, [])
 
   useEffect(() => {
-    // Check for saved theme preference
+    // Check for saved theme preference (optimized)
     const savedTheme = localStorage.getItem("theme")
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
     const shouldBeDark = savedTheme === "dark" || (!savedTheme && prefersDark)
 
     setIsDark(shouldBeDark)
-    document.documentElement.classList.toggle("dark", shouldBeDark)
+    if (shouldBeDark !== document.documentElement.classList.contains("dark")) {
+      document.documentElement.classList.toggle("dark", shouldBeDark)
+    }
 
-    // Start typewriter animation
-    setTimeout(() => setTitleAnimationComplete(true), 2000)
+    // Optimize typewriter animation
+    const timer = setTimeout(() => setTitleAnimationComplete(true), 1000) // Reduced from 2000ms
+    return () => clearTimeout(timer)
   }, [])
 
   const toggleTheme = () => {
     const newTheme = !isDark
     setIsDark(newTheme)
-    document.documentElement.classList.toggle("dark", newTheme)
-    localStorage.setItem("theme", newTheme ? "dark" : "light")
+    
+    // Batch DOM operations
+    requestAnimationFrame(() => {
+      document.documentElement.classList.toggle("dark", newTheme)
+      localStorage.setItem("theme", newTheme ? "dark" : "light")
+    })
   }
 
   const handleExportPDF = async () => {
@@ -283,22 +292,30 @@ export default function HomePage() {
   )
 }
 
-// Typewriter animation component
+// Typewriter animation component (optimized)
 function TypewriterText({ text, onComplete }: { text: string; onComplete?: () => void }) {
   const [displayText, setDisplayText] = useState("")
   const [currentIndex, setCurrentIndex] = useState(0)
+  const prefersReducedMotion = useReducedMotion()
 
   useEffect(() => {
+    // Skip animation if reduced motion is preferred
+    if (prefersReducedMotion) {
+      setDisplayText(text)
+      onComplete?.()
+      return
+    }
+
     if (currentIndex < text.length) {
       const timeout = setTimeout(() => {
         setDisplayText((prev) => prev + text[currentIndex])
         setCurrentIndex((prev) => prev + 1)
-      }, 100)
+      }, 50) // Reduced from 100ms for faster animation
       return () => clearTimeout(timeout)
     } else if (onComplete) {
       onComplete()
     }
-  }, [currentIndex, text, onComplete])
+  }, [currentIndex, text, onComplete, prefersReducedMotion])
 
   return <span>{displayText}</span>
 }

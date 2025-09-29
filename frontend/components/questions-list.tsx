@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -28,7 +28,7 @@ interface QuestionsListProps {
   savedQuestions: Question[]
   setSavedQuestions: (questions: Question[]) => void
   answers: Record<string, string>
-  setAnswers: (answers: Record<string, string>) => void
+  setAnswers: (answers: Record<string, string> | ((prev: Record<string, string>) => Record<string, string>)) => void
   resumeText?: string
   jobDescription?: string
   setActiveTab?: (tab: string) => void
@@ -91,11 +91,14 @@ export function QuestionsList({ questions, savedQuestions, setSavedQuestions, an
 
     // Auto-save after 800ms of no typing
     const timeout = setTimeout(() => {
-      setAnswers({ ...answers, [questionId]: value })
+      setAnswers(prev => ({ ...prev, [questionId]: value }))
       setAutoSaveStatus(prev => ({ ...prev, [questionId]: "saved" }))
-      setTimeout(() => {
+      const statusTimeout = setTimeout(() => {
         setAutoSaveStatus(prev => ({ ...prev, [questionId]: "idle" }))
       }, 2000)
+      
+      // Store status timeout for cleanup
+      setSavingTimeouts(prev => ({ ...prev, [`${questionId}_status`]: statusTimeout }))
     }, 800)
 
     setSavingTimeouts(prev => ({ ...prev, [questionId]: timeout }))
@@ -128,7 +131,7 @@ export function QuestionsList({ questions, savedQuestions, setSavedQuestions, an
       setAnswerInputs(prev => ({ ...prev, [questionId]: response.answer }))
 
       // Auto-save the generated answer
-      setAnswers({ ...answers, [questionId]: response.answer })
+      setAnswers(prev => ({ ...prev, [questionId]: response.answer }))
       setAutoSaveStatus(prev => ({ ...prev, [questionId]: "saved" }))
 
       // Hide AI options after generation
@@ -149,6 +152,15 @@ export function QuestionsList({ questions, savedQuestions, setSavedQuestions, an
   const toggleAiOptions = (questionId: string) => {
     setShowAiOptions(prev => ({ ...prev, [questionId]: !prev[questionId] }))
   }
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(savingTimeouts).forEach(timeout => {
+        if (timeout) clearTimeout(timeout)
+      })
+    }
+  }, [savingTimeouts])
 
   if (questions.length === 0) {
     return (

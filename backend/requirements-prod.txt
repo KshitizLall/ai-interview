@@ -1,0 +1,27 @@
+# Production requirements for Render deployment
+# Core FastAPI and web server
+fastapi==0.117.1
+uvicorn[standard]==0.36.0
+pydantic==2.11.9
+pydantic-settings==2.10.1
+
+# WebSocket support (explicitly needed for real-time features)
+websockets==12.0
+
+# File handling and multipart data
+python-multipart==0.0.20
+aiofiles==24.1.0
+
+# Document processing
+PyPDF2==3.0.1
+python-docx==1.2.0
+reportlab==4.4.4
+
+# OpenAI integration
+openai==1.108.1
+
+# Environment configuration
+python-dotenv==1.1.1
+
+# Production server
+gunicorn==23.0.0

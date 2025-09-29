@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Performance optimizations */
+@import "../styles/performance.css";
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
