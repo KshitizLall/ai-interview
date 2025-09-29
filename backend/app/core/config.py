@@ -3,12 +3,19 @@ from typing import List
 
 class Settings(BaseSettings):
     # App Settings
-    APP_NAME: str = "AI Interview Prep API"
+    APP_NAME: str = "InterviewBot API"
     DEBUG: bool = True
     VERSION: str = "1.0.0"
     
-    # CORS Settings
-    ALLOWED_HOSTS: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    # CORS Settings - Updated for production
+    ALLOWED_HOSTS: List[str] = [
+        "http://localhost:3000", 
+        "http://127.0.0.1:3000",
+        "https://ai-interview-black-gamma.vercel.app",  # Current Vercel deployment
+    ]
+    
+    # CORS regex pattern for Vercel preview deployments
+    ALLOWED_ORIGIN_REGEX: str = r"https://.*\.vercel\.app"
     
     # OpenAI Settings
     OPENAI_API_KEY: str

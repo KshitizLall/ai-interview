@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -28,7 +28,7 @@ interface QuestionsListProps {
   savedQuestions: Question[]
   setSavedQuestions: (questions: Question[]) => void
   answers: Record<string, string>
-  setAnswers: (answers: Record<string, string>) => void
+  setAnswers: (answers: Record<string, string> | ((prev: Record<string, string>) => Record<string, string>)) => void
   resumeText?: string
   jobDescription?: string
   setActiveTab?: (tab: string) => void
@@ -45,13 +45,16 @@ export function QuestionsList({ questions, savedQuestions, setSavedQuestions, an
   const [showAiOptions, setShowAiOptions] = useState<Record<string, boolean>>({})
 
   const toggleSave = (question: Question) => {
-    const isCurrentlySaved = savedQuestions.some((q) => q.id === question.id)
+    // Use requestAnimationFrame for smooth UI updates
+    requestAnimationFrame(() => {
+      const isCurrentlySaved = savedQuestions.some((q) => q.id === question.id)
 
-    if (isCurrentlySaved) {
-      setSavedQuestions(savedQuestions.filter((q) => q.id !== question.id))
-    } else {
-      setSavedQuestions([...savedQuestions, question])
-    }
+      if (isCurrentlySaved) {
+        setSavedQuestions(savedQuestions.filter((q) => q.id !== question.id))
+      } else {
+        setSavedQuestions([...savedQuestions, question])
+      }
+    })
   }
 
   const copyQuestion = (text: string) => {
@@ -79,23 +82,36 @@ export function QuestionsList({ questions, savedQuestions, setSavedQuestions, an
   }
 
   const handleAnswerChange = (questionId: string, value: string) => {
-    setAnswerInputs(prev => ({ ...prev, [questionId]: value }))
+    // Use requestAnimationFrame for smooth UI updates
+    requestAnimationFrame(() => {
+      setAnswerInputs(prev => ({ ...prev, [questionId]: value }))
+    })
 
     // Clear existing timeout
     if (savingTimeouts[questionId]) {
       clearTimeout(savingTimeouts[questionId])
     }
 
-    // Set saving status
-    setAutoSaveStatus(prev => ({ ...prev, [questionId]: "saving" }))
+    // Use requestAnimationFrame for status updates
+    requestAnimationFrame(() => {
+      setAutoSaveStatus(prev => ({ ...prev, [questionId]: "saving" }))
+    })
 
-    // Auto-save after 800ms of no typing
+    // Auto-save after 1200ms of no typing (increased for better performance)
     const timeout = setTimeout(() => {
-      setAnswers({ ...answers, [questionId]: value })
-      setAutoSaveStatus(prev => ({ ...prev, [questionId]: "saved" }))
-      setTimeout(() => {
-        setAutoSaveStatus(prev => ({ ...prev, [questionId]: "idle" }))
+      requestAnimationFrame(() => {
+        setAnswers(prev => ({ ...prev, [questionId]: value }))
+        setAutoSaveStatus(prev => ({ ...prev, [questionId]: "saved" }))
+      })
+      
+      const statusTimeout = setTimeout(() => {
+        requestAnimationFrame(() => {
+          setAutoSaveStatus(prev => ({ ...prev, [questionId]: "idle" }))
+        })
       }, 2000)
+      
+      // Store status timeout for cleanup
+      setSavingTimeouts(prev => ({ ...prev, [`${questionId}_status`]: statusTimeout }))
     }, 800)
 
     setSavingTimeouts(prev => ({ ...prev, [questionId]: timeout }))
@@ -115,40 +131,63 @@ export function QuestionsList({ questions, savedQuestions, setSavedQuestions, an
 
   const handleGenerateAIAnswer = async (question: Question, style?: typeof aiAnswerStyle) => {
     const questionId = question.id
-    setAiGeneratingStatus(prev => ({ ...prev, [questionId]: true }))
+    
+    // Immediate UI feedback
+    requestAnimationFrame(() => {
+      setAiGeneratingStatus(prev => ({ ...prev, [questionId]: true }))
+    })
 
-    try {
-      const response = await apiService.generateAnswer({
-        question: question.question,
-        resume_text: resumeText,
-        job_description: jobDescription,
-      })
+    // Defer heavy operations to prevent blocking
+    setTimeout(async () => {
+      try {
+        const response = await apiService.generateAnswer({
+          question: question.question,
+          resume_text: resumeText,
+          job_description: jobDescription,
+        })
 
-      // Set the generated answer
-      setAnswerInputs(prev => ({ ...prev, [questionId]: response.answer }))
+        // Use requestAnimationFrame for smooth UI updates
+        requestAnimationFrame(() => {
+          // Set the generated answer
+          setAnswerInputs(prev => ({ ...prev, [questionId]: response.answer }))
 
-      // Auto-save the generated answer
-      setAnswers({ ...answers, [questionId]: response.answer })
-      setAutoSaveStatus(prev => ({ ...prev, [questionId]: "saved" }))
+          // Auto-save the generated answer
+          setAnswers(prev => ({ ...prev, [questionId]: response.answer }))
+          setAutoSaveStatus(prev => ({ ...prev, [questionId]: "saved" }))
 
-      // Hide AI options after generation
-      setShowAiOptions(prev => ({ ...prev, [questionId]: false }))
+          // Hide AI options after generation
+          setShowAiOptions(prev => ({ ...prev, [questionId]: false }))
+        })
 
-      setTimeout(() => {
-        setAutoSaveStatus(prev => ({ ...prev, [questionId]: "idle" }))
-      }, 2000)
+        setTimeout(() => {
+          requestAnimationFrame(() => {
+            setAutoSaveStatus(prev => ({ ...prev, [questionId]: "idle" }))
+          })
+        }, 2000)
 
-    } catch (error) {
-      console.error("AI generation error:", error)
-      // You could show a toast notification here
-    } finally {
-      setAiGeneratingStatus(prev => ({ ...prev, [questionId]: false }))
-    }
+      } catch (error) {
+        console.error("AI generation error:", error)
+        // You could show a toast notification here
+      } finally {
+        requestAnimationFrame(() => {
+          setAiGeneratingStatus(prev => ({ ...prev, [questionId]: false }))
+        })
+      }
+    }, 0)
   }
 
   const toggleAiOptions = (questionId: string) => {
     setShowAiOptions(prev => ({ ...prev, [questionId]: !prev[questionId] }))
   }
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(savingTimeouts).forEach(timeout => {
+        if (timeout) clearTimeout(timeout)
+      })
+    }
+  }, [savingTimeouts])
 
   if (questions.length === 0) {
     return (
@@ -292,7 +331,7 @@ export function QuestionsList({ questions, savedQuestions, setSavedQuestions, an
 
                     {/* AI Options */}
                     {showAiOptions[question.id] && (
-                      <Card className="border-primary/20 bg-primary/5">
+                      <Card className="border-primary/20 bg-primary/5 glass-card-subtle">
                         <CardContent className="p-3 space-y-3">
                           <div className="flex items-center gap-2">
                             <Sparkles className="w-4 h-4 text-primary" />

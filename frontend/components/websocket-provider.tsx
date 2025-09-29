@@ -43,10 +43,12 @@ export function WebSocketProvider({
   const effectiveSessionId = sessionId || React.useMemo(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, [sessionId])
 
   const ws = useWebSocket({
-    url: process.env.NODE_ENV === 'production' 
-      ? 'wss://your-api-domain.com/api/v1/websocket/ws'
-      : 'ws://localhost:8000/api/v1/websocket/ws',
+    url: process.env.NEXT_PUBLIC_WS_URL || 
+         (process.env.NODE_ENV === 'production' 
+           ? 'wss://interviewbot-8908.onrender.com/api/v1/websocket/ws'
+           : 'ws://localhost:8000/api/v1/websocket/ws'),
     sessionId: effectiveSessionId,
+    reconnect: false, // Disable reconnection to prevent constant failed attempts
     onProgressUpdate: (progress) => {
       setProgressUpdate(progress)
     },

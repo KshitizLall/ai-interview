@@ -1,0 +1,76 @@
+/* Performance optimizations */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Optimize heavy blur effects */
+.glass-card {
+  backdrop-filter: blur(8px); /* Reduced from higher values */
+}
+
+.glass-card-subtle {
+  backdrop-filter: blur(4px); /* Reduced from higher values */
+}
+
+/* Optimize gradients */
+@supports not (-webkit-backdrop-filter: blur(10px)) {
+  .glass-card,
+  .glass-card-subtle {
+    backdrop-filter: none;
+    background-color: rgba(255, 255, 255, 0.8);
+  }
+  
+  .dark .glass-card,
+  .dark .glass-card-subtle {
+    background-color: rgba(0, 0, 0, 0.8);
+  }
+}
+
+/* Reduce animation complexity for performance */
+.animate-fade-in-up {
+  animation: fadeInUp 0.3s ease-out forwards; /* Reduced from longer duration */
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px); /* Reduced from larger values */
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite; /* Slower animation */
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px); /* Reduced from larger values */
+  }
+}
+
+/* Optimize pulsing animations */
+.animate-pulse {
+  animation: pulse 2s ease-in-out infinite; /* Slower pulse */
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8; /* Less dramatic opacity change */
+  }
+}

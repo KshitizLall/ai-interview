@@ -14,7 +14,7 @@ load_dotenv()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    print("🚀 AI Interview Prep API starting up...")
+    print("🚀 InterviewBot API starting up...")
     
     # Create upload directory if it doesn't exist
     os.makedirs("uploads", exist_ok=True)
@@ -23,11 +23,11 @@ async def lifespan(app: FastAPI):
     yield
     
     # Shutdown
-    print("🔄 AI Interview Prep API shutting down...")
+    print("🔄 InterviewBot API shutting down...")
 
 # Create FastAPI app
 app = FastAPI(
-    title="AI Interview Prep API",
+    title="InterviewBot API",
     description="Backend API for AI-powered interview preparation application",
     version="1.0.0",
     lifespan=lifespan
@@ -37,6 +37,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_HOSTS,
+    allow_origin_regex=settings.ALLOWED_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -51,7 +52,7 @@ app.include_router(api_router, prefix="/api/v1")
 @app.get("/")
 async def root():
     return {
-        "message": "AI Interview Prep API",
+        "message": "InterviewBot API",
         "version": "1.0.0",
         "status": "running"
     }
@@ -62,10 +63,11 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
+    port = int(os.environ.get("PORT", 10000))  # Use PORT environment variable for Render
     uvicorn.run(
         "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
+        host="0.0.0.0",  # Bind to all interfaces for production
+        port=port,
+        reload=False,  # Disable reload in production
         log_level="info"
     )

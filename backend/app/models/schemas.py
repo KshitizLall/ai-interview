@@ -93,11 +93,18 @@ class BulkAnswerGenerationResponse(BaseModel):
     total_answers: int
 
 # PDF Export Models
+class PDFExportOptions(BaseModel):
+    include_analytics: bool = True
+    include_tips: bool = True
+    color_scheme: str = "professional"  # professional, minimal, modern
+    page_layout: str = "executive"  # compact, spacious, executive
+
 class PDFExportRequest(BaseModel):
     questions: List[Question]
     answers: Dict[str, str]
     resume_filename: Optional[str] = None
     job_title: Optional[str] = None
+    export_options: Optional[PDFExportOptions] = PDFExportOptions()
 
 class PDFExportResponse(BaseModel):
     filename: str

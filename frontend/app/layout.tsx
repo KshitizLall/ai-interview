@@ -4,9 +4,11 @@ import { GeistMono } from 'geist/font/mono'
 import { Analytics } from '@vercel/analytics/next'
 import { WebSocketProvider } from '@/components/websocket-provider'
 import './globals.css'
+import { SpeedInsights } from '@vercel/speed-insights/next';
+
 
 export const metadata: Metadata = {
-  title: 'AI Interview Prep',
+  title: 'InterviewBot',
   description: 'AI-powered interview preparation with real-time features',
   generator: 'v0.app',
 }
@@ -23,6 +25,7 @@ export default function RootLayout({
           {children}
         </WebSocketProvider>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )

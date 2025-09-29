@@ -70,6 +70,12 @@ export interface PDFExportRequest {
   answers: Record<string, string>
   resume_filename?: string
   job_title?: string
+  export_options?: {
+    include_analytics?: boolean
+    include_tips?: boolean
+    color_scheme?: 'professional' | 'minimal' | 'modern'
+    page_layout?: 'compact' | 'spacious' | 'executive'
+  }
 }
 
 export interface PDFExportResponse {
@@ -171,8 +177,8 @@ class APIService {
     return response.json()
   }
 
-  async healthCheck(): Promise<{ status: string; service: string }> {
-    const response = await fetch(`${this.baseURL}/interview/health`)
+  async healthCheck(): Promise<{ status: string; service?: string }> {
+    const response = await fetch(`${this.baseURL.replace('/api/v1', '')}/health`)
 
     if (!response.ok) {
       throw new Error('Health check failed')
@@ -184,7 +190,8 @@ class APIService {
   // Helper method to download PDF
   downloadPDF(downloadUrl: string, filename: string) {
     const link = document.createElement('a')
-    link.href = `http://localhost:8000${downloadUrl}`
+    const baseUrl = this.baseURL.replace('/api/v1', '')
+    link.href = `${baseUrl}${downloadUrl}`
     link.download = filename
     document.body.appendChild(link)
     link.click()
