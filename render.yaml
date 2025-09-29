@@ -25,7 +25,7 @@ services:
     runtime: node
     plan: starter  # Change to 'standard' or higher for production
     buildCommand: cd frontend && npm install && npm run build
-    startCommand: chmod +x start.sh && ./start.sh
+    startCommand: cd frontend && npm run start
     envVars:
       - key: NODE_VERSION
         value: 18.18.0
