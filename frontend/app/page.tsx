@@ -209,22 +209,12 @@ export default function HomePage() {
             {/* Mobile Layout */}
             <div className="md:hidden space-y-3">
               {/* First Row: Logo, Title, Theme Toggle */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center">
-                    <FileText className="w-3.5 h-3.5 text-primary-foreground" />
-                  </div>
-                  <h1 className="text-lg font-semibold truncate">
-                    <TypewriterText text="Interview Prep" onComplete={() => setTitleAnimationComplete(true)} />
-                  </h1>
-                </div>
                 <div className="flex items-center gap-2">
                   <ConnectionStatus size="sm" />
                   <Button variant="ghost" size="sm" onClick={toggleTheme}>
                     {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                   </Button>
                 </div>
-              </div>
 
               {/* Second Row: Action Buttons */}
               <div className="flex flex-wrap gap-2 justify-center">
@@ -493,60 +483,6 @@ function OutputsPane({
             </div>
           </div>
 
-          {/* Enhanced Features Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 animate-fade-in-up delay-300">
-            <div className="group relative p-8 bg-gradient-to-br from-card/70 to-card/30 glass-card border border-border/30 rounded-2xl hover:shadow-2xl hover:shadow-primary/5 transition-all duration-500 hover:-translate-y-2 backdrop-blur-md">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative space-y-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900/50 dark:to-blue-800/30 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                  <FileText className="w-8 h-8 text-blue-600 dark:text-blue-400" />
-                </div>
-                <h3 className="text-xl font-semibold group-hover:text-primary transition-colors">Smart Question Generation</h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  Our AI analyzes your resume and job requirements to create highly relevant, targeted interview questions that matter
-                </p>
-                <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 font-medium">
-                  <div className="w-1 h-1 bg-current rounded-full" />
-                  Powered by advanced ML
-                </div>
-              </div>
-            </div>
-
-            <div className="group relative p-8 bg-gradient-to-br from-card/70 to-card/30 glass-card border border-border/30 rounded-2xl hover:shadow-2xl hover:shadow-primary/5 transition-all duration-500 hover:-translate-y-2 md:translate-y-4 backdrop-blur-md">
-              <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative space-y-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-green-50 dark:from-green-900/50 dark:to-green-800/30 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                  <Briefcase className="w-8 h-8 text-green-600 dark:text-green-400" />
-                </div>
-                <h3 className="text-xl font-semibold group-hover:text-primary transition-colors">Industry-Specific Focus</h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  Questions tailored to your specific field with technical, behavioral, and situational scenarios that recruiters actually ask
-                </p>
-                <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400 font-medium">
-                  <div className="w-1 h-1 bg-current rounded-full" />
-                  Multi-domain expertise
-                </div>
-              </div>
-            </div>
-
-            <div className="group relative p-8 bg-gradient-to-br from-card/70 to-card/30 glass-card border border-border/30 rounded-2xl hover:shadow-2xl hover:shadow-primary/5 transition-all duration-500 hover:-translate-y-2 backdrop-blur-md">
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative space-y-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-purple-50 dark:from-purple-900/50 dark:to-purple-800/30 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                  <Download className="w-8 h-8 text-purple-600 dark:text-purple-400" />
-                </div>
-                <h3 className="text-xl font-semibold group-hover:text-primary transition-colors">Practice & Export</h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  Practice your answers, save your favorites, and export your complete prep materials as professional PDFs
-                </p>
-                <div className="flex items-center gap-2 text-xs text-purple-600 dark:text-purple-400 font-medium">
-                  <div className="w-1 h-1 bg-current rounded-full" />
-                  Export ready materials
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* Premium CTA Section */}
           <div className="space-y-8 animate-fade-in-up delay-500">
             <div className="relative group">
@@ -579,16 +515,6 @@ function OutputsPane({
             </div>
           </div>
 
-          {/* Social Proof Section */}
-          <div className="pt-8 border-t border-border/50">
-            <p className="text-sm text-muted-foreground mb-6">Trusted by professionals worldwide</p>
-            <div className="flex items-center justify-center gap-8 opacity-60">
-              <div className="text-xs font-medium">🚀 AI-Powered</div>
-              <div className="text-xs font-medium">⚡ Instant Results</div>
-              <div className="text-xs font-medium">🎯 Precision Targeting</div>
-              <div className="text-xs font-medium">📄 Export Ready</div>
-            </div>
-          </div>
         </div>
       </div>
     )
