@@ -12,9 +12,10 @@ class Settings(BaseSettings):
         "http://localhost:3000", 
         "http://127.0.0.1:3000",
         "https://ai-interview-black-gamma.vercel.app",  # Current Vercel deployment
-        "https://*.vercel.app",  # All Vercel preview deployments
-        "https://*.onrender.com"  # Allow all Render domains for development
     ]
+    
+    # CORS regex pattern for Vercel preview deployments
+    ALLOWED_ORIGIN_REGEX: str = r"https://.*\.vercel\.app"
     
     # OpenAI Settings
     OPENAI_API_KEY: str
