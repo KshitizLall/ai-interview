@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import interview, websocket
+from app.api.endpoints import interview, websocket
 
 api_router = APIRouter()
 

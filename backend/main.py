@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 import os
 from dotenv import load_dotenv
 
-from app.api.v1.router import api_router
+from app.api.router import api_router
 from app.core.config import settings
 
 # Load environment variables
@@ -47,7 +47,7 @@ app.add_middleware(
 app.mount("/exports", StaticFiles(directory="exports"), name="exports")
 
 # Include API router
-app.include_router(api_router, prefix="/api/v1")
+app.include_router(api_router)
 
 @app.get("/")
 async def root():

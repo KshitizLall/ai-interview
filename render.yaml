@@ -34,7 +34,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: NEXT_PUBLIC_API_URL
-        # Manual override format: https://your-backend-service.onrender.com/api/v1
+        # Manual override format: https://your-backend-service.onrender.com
         sync: false
       - key: NEXT_PUBLIC_WS_URL
         # Will be constructed from backend URL, replace http with ws/wss

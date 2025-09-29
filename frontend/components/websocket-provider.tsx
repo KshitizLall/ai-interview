@@ -45,8 +45,8 @@ export function WebSocketProvider({
   const ws = useWebSocket({
     url: process.env.NEXT_PUBLIC_WS_URL || 
          (process.env.NODE_ENV === 'production' 
-           ? 'wss://interviewbot-8908.onrender.com/api/v1/websocket/ws'
-           : 'ws://localhost:8000/api/v1/websocket/ws'),
+           ? 'wss://interviewbot-8908.onrender.com/websocket/ws'
+           : 'ws://localhost:8000/websocket/ws'),
     sessionId: effectiveSessionId,
     reconnect: false, // Disable reconnection to prevent constant failed attempts
     onProgressUpdate: (progress) => {

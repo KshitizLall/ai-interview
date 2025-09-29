@@ -54,8 +54,8 @@
    ```
    NODE_VERSION=18.18.0
    NODE_ENV=production
-   NEXT_PUBLIC_API_URL=https://your-backend-url.onrender.com/api/v1
-   NEXT_PUBLIC_WS_URL=wss://your-backend-url.onrender.com/api/v1/websocket/ws
+   NEXT_PUBLIC_API_URL=https://your-backend-url.onrender.com
+   NEXT_PUBLIC_WS_URL=wss://your-backend-url.onrender.com/websocket/ws
    ```
 
 6. Click **"Create Web Service"**
@@ -101,8 +101,8 @@ ALLOWED_HOSTS: List[str] = [
 ### Frontend Variables
 | Variable | Required | Description | Example |
 |----------|----------|-------------|---------|
-| `NEXT_PUBLIC_API_URL` | Yes | Backend API URL | `https://backend.onrender.com/api/v1` |
-| `NEXT_PUBLIC_WS_URL` | Yes | WebSocket URL | `wss://backend.onrender.com/api/v1/websocket/ws` |
+| `NEXT_PUBLIC_API_URL` | Yes | Backend API URL | `https://backend.onrender.com` |
+| `NEXT_PUBLIC_WS_URL` | Yes | WebSocket URL | `wss://backend.onrender.com/websocket/ws` |
 | `NODE_ENV` | No | Environment | `production` |
 
 ## Troubleshooting Common Issues

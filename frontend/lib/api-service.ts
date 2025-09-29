@@ -1,6 +1,6 @@
 // API service for communicating with FastAPI backend
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
 export interface Question {
   id: string
@@ -178,7 +178,7 @@ class APIService {
   }
 
   async healthCheck(): Promise<{ status: string; service?: string }> {
-    const response = await fetch(`${this.baseURL.replace('/api/v1', '')}/health`)
+    const response = await fetch(`${this.baseURL}/health`)
 
     if (!response.ok) {
       throw new Error('Health check failed')
@@ -190,8 +190,7 @@ class APIService {
   // Helper method to download PDF
   downloadPDF(downloadUrl: string, filename: string) {
     const link = document.createElement('a')
-    const baseUrl = this.baseURL.replace('/api/v1', '')
-    link.href = `${baseUrl}${downloadUrl}`
+    link.href = `${this.baseURL}${downloadUrl}`
     link.download = filename
     document.body.appendChild(link)
     link.click()

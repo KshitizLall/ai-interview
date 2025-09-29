@@ -16,7 +16,7 @@ A robust FastAPI backend for the InterviewBot application that handles file proc
 ```
 backend/
 ├── app/
-│   ├── api/v1/
+│   ├── api/
 │   │   ├── endpoints/
 │   │   │   └── interview.py      # Interview-related endpoints
 │   │   └── router.py             # API router configuration
@@ -84,31 +84,31 @@ The API will be available at:
 ## API Endpoints
 
 ### File Processing
-- `POST /api/v1/interview/upload-file` - Upload and process resume files
+- `POST /interview/upload-file` - Upload and process resume files
 
 ### Question Generation
-- `POST /api/v1/interview/generate-questions` - Generate interview questions
-- `POST /api/v1/interview/generate-answer` - Generate sample answers
+- `POST /interview/generate-questions` - Generate interview questions
+- `POST /interview/generate-answer` - Generate sample answers
 
 ### PDF Export
-- `POST /api/v1/interview/export-pdf` - Export questions/answers to PDF
+- `POST /interview/export-pdf` - Export questions/answers to PDF
 
 ### Health Check
-- `GET /api/v1/interview/health` - Service health check
+- `GET /interview/health` - Service health check
 - `GET /health` - Application health check
 
 ## API Usage Examples
 
 ### Upload Resume File
 ```bash
-curl -X POST "http://localhost:8000/api/v1/interview/upload-file" \
+curl -X POST "http://localhost:8000/interview/upload-file" \
   -H "Content-Type: multipart/form-data" \
   -F "file=@resume.pdf"
 ```
 
 ### Generate Questions
 ```bash
-curl -X POST "http://localhost:8000/api/v1/interview/generate-questions" \
+curl -X POST "http://localhost:8000/interview/generate-questions" \
   -H "Content-Type: application/json" \
   -d '{
     "resume_text": "John Doe, Software Engineer...",
@@ -121,7 +121,7 @@ curl -X POST "http://localhost:8000/api/v1/interview/generate-questions" \
 
 ### Generate Answer
 ```bash
-curl -X POST "http://localhost:8000/api/v1/interview/generate-answer" \
+curl -X POST "http://localhost:8000/interview/generate-answer" \
   -H "Content-Type: application/json" \
   -d '{
     "question": "Tell me about your Python experience",
@@ -144,7 +144,7 @@ Key configuration options in `.env`:
 
 ### Adding New Endpoints
 
-1. Add new endpoint functions to `app/api/v1/endpoints/interview.py`
+1. Add new endpoint functions to `app/api/endpoints/interview.py`
 2. Add corresponding Pydantic models to `app/models/schemas.py`
 3. Create service logic in appropriate service files
 4. Update router if needed

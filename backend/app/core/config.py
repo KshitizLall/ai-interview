@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     ALLOWED_HOSTS: List[str] = [
         "http://localhost:3000", 
         "http://127.0.0.1:3000",
-        "https://ai-interview-black-gamma.vercel.app",  # Current Vercel deployment
+        "https://ai-interview-frontend-nu.vercel.app",  # Current Vercel deployment
     ]
     
     # CORS regex pattern for Vercel preview deployments
