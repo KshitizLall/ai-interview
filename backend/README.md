@@ -66,6 +66,8 @@ copy .env.example .env
 OPENAI_API_KEY=your_actual_openai_api_key_here
 ```
 
+Be sure to set a strong `JWT_SECRET_KEY` in your `.env` for token signing. You can also set `MONGO_URI` to override the default MongoDB connection string.
+
 ### 4. Run the Application
 
 ```bash
@@ -176,3 +178,127 @@ For production deployment, consider:
 - **ReportLab**: PDF generation
 - **Uvicorn**: ASGI server
 - **Pydantic**: Data validation and settings management
+
+## Auth smoke tests
+
+After starting the server, you can test the new auth endpoints with curl:
+
+Signup:
+
+```bash
+curl -X POST "http://localhost:8000/auth/signup" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"secret123","name":"Test User"}'
+```
+
+Login:
+
+```bash
+curl -X POST "http://localhost:8000/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"secret123"}'
+```
+
+Logout (pass the Authorization header returned from login/signup):
+
+```bash
+curl -X POST "http://localhost:8000/auth/logout" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+
+## API Curl Examples (use host http://0.0.0.0:10000)
+
+Below are PowerShell-ready curl.exe commands for all endpoints. These assume the backend is running on http://0.0.0.0:10000.
+
+Auth - Signup
+```powershell
+curl.exe -X POST "http://0.0.0.0:10000/auth/signup" `
+  -H "Content-Type: application/json" `
+  -d '{"email":"test@example.com","password":"secret123","name":"Test User"}'
+```
+
+Auth - Login
+```powershell
+curl.exe -X POST "http://0.0.0.0:10000/auth/login" `
+  -H "Content-Type: application/json" `
+  -d '{"email":"test@example.com","password":"secret123"}'
+```
+
+Auth - Logout
+```powershell
+curl.exe -X POST "http://0.0.0.0:10000/auth/logout" `
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+
+Upload resume file (replace path to your file)
+```powershell
+curl.exe -X POST "http://0.0.0.0:10000/interview/upload-file" `
+  -H "Accept: application/json" `
+  -F "file=@C:\path\to\resume.pdf"
+```
+
+Generate questions (combined mode)
+```powershell
+curl.exe -X POST "http://0.0.0.0:10000/interview/generate-questions" `
+  -H "Content-Type: application/json" `
+  -d '{
+    "resume_text": "Experienced backend engineer...",
+    "job_description": "Looking for a Python backend developer...",
+    "mode": "combined",
+    "question_count": 5,
+    "include_answers": false
+  }'
+```
+
+Generate one answer for a question
+```powershell
+curl.exe -X POST "http://0.0.0.0:10000/interview/generate-answer" `
+  -H "Content-Type: application/json" `
+  -d '{
+    "question": "Tell me about a time you led a project.",
+    "resume_text": "Led a team of 4 engineers to deliver a SaaS feature..."
+  }'
+```
+
+Generate bulk answers
+```powershell
+curl.exe -X POST "http://0.0.0.0:10000/interview/generate-bulk-answers" `
+  -H "Content-Type: application/json" `
+  -d '{
+    "questions": [
+      { "id": "q1", "question": "How do you design scalable systems?", "type": "technical", "difficulty": "advanced", "relevance_score": 0.9 },
+      { "id": "q2", "question": "Tell me about a time you resolved conflict.", "type": "behavioral", "difficulty": "intermediate", "relevance_score": 0.8 }
+    ],
+    "resume_text": "My background includes ...",
+    "answer_style": "professional"
+  }'
+```
+
+Export to PDF
+```powershell
+curl.exe -X POST "http://0.0.0.0:10000/interview/export-pdf" `
+  -H "Content-Type: application/json" `
+  -d '{
+    "questions": [
+      { "id": "q1", "question": "What is your greatest strength?", "type": "general", "difficulty":"beginner", "relevance_score": 0.5 }
+    ],
+    "answers": { "q1": "My greatest strength is..." },
+    "resume_filename": "resume.pdf",
+    "job_title": "Backend Engineer"
+  }'
+```
+
+Health endpoints
+```powershell
+curl.exe "http://0.0.0.0:10000/health"
+curl.exe "http://0.0.0.0:10000/interview/health"
+```
+
+WebSocket
+- Use a WebSocket client like `wscat` or the browser (curl does not support WebSocket). Connect to: `ws://0.0.0.0:10000/websocket/ws?session_id=test-session`
+
+Notes:
+- Replace `<ACCESS_TOKEN>` with the JWT returned by `/auth/login` or `/auth/signup`.
+- For PowerShell prefer `curl.exe` to avoid the shell alias for `curl`.
+- You can import any `curl` block into Postman by copying the raw curl command (Postman > Import > Raw text).
+

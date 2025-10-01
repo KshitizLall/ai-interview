@@ -29,6 +29,14 @@ class Settings(BaseSettings):
     
     # Database Settings (for future use)
     DATABASE_URL: str = "sqlite:///./interview_prep.db"
+
+    # MongoDB (Atlas) - used for auth / user storage
+    MONGO_URI: str = "mongodb+srv://shivamjain169_db_user:dUxvRTypp4xkfbUz@ai-interview.s34qp5q.mongodb.net/?retryWrites=true&w=majority&appName=AI-INTERVIEW"
+
+    # JWT settings
+    JWT_SECRET_KEY: str = "change-me-in-production"
+    JWT_ALGORITHM: str = "HS256"
+    JWT_EXPIRATION_SECONDS: int = 3600  # 1 hour
     
     class Config:
         env_file = ".env"

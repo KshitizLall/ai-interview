@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 
 from app.api.router import api_router
 from app.core.config import settings
+from app.core.mongo import get_client
 
 # Load environment variables
 load_dotenv()
@@ -19,11 +20,22 @@ async def lifespan(app: FastAPI):
     # Create upload directory if it doesn't exist
     os.makedirs("uploads", exist_ok=True)
     os.makedirs("exports", exist_ok=True)
-    
+    # Initialize MongoDB client
+    try:
+        _ = get_client()
+        print("✅ MongoDB client initialized")
+    except Exception as e:
+        print(f"⚠️ MongoDB initialization failed: {e}")
     yield
     
     # Shutdown
     print("🔄 InterviewBot API shutting down...")
+    try:
+        client = get_client()
+        client.close()
+        print("✅ MongoDB client closed")
+    except Exception:
+        pass
 
 # Create FastAPI app
 app = FastAPI(
