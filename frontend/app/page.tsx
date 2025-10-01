@@ -19,11 +19,14 @@ import { useReducedMotion } from "@/hooks/use-reduced-motion"
 import { apiService } from "@/lib/api-service"
 import { Briefcase, Clock, Download, FileText, HelpCircle, Moon, Sparkles, Sun } from "lucide-react"
 import { useEffect, useState } from "react"
+import { useAuth } from "@/hooks/use-auth"
+import AuthenticatedArea from "@/components/authenticated-area"
 import { toast } from "sonner"
 
 export default function HomePage() {
+  // Declare hooks and state unconditionally to preserve React hooks order
+  const { token } = useAuth()
   const [isDark, setIsDark] = useState(false)
-
   const prefersReducedMotion = useReducedMotion()
   const [resumeFile, setResumeFile] = useState<File | null>(null)
   const [resumeText, setResumeText] = useState("")
@@ -88,14 +91,11 @@ export default function HomePage() {
     if (shouldBeDark !== document.documentElement.classList.contains("dark")) {
       document.documentElement.classList.toggle("dark", shouldBeDark)
     }
-
-
   }, [])
 
   const toggleTheme = () => {
     const newTheme = !isDark
     setIsDark(newTheme)
-    
     // Batch DOM operations
     requestAnimationFrame(() => {
       document.documentElement.classList.toggle("dark", newTheme)
@@ -152,49 +152,18 @@ export default function HomePage() {
     }
   }
 
+  // If authenticated, render the authenticated area which implements the post-auth UI
+  if (token) {
+    return <AuthenticatedArea />
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Header Navigation */}
       <HeaderNavigation />
 
       <div className="flex-1">
-        {/* Simplified Top Bar */}
-        <header className="border-b border-border/30 bg-card/30 backdrop-blur-md glass-card-subtle sticky top-0 z-50">
-          <div className="container mx-auto px-4 py-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <ConnectionStatus size="sm" />
-                <span className="text-sm text-muted-foreground hidden sm:inline">AI Interview Prep</span>
-              </div>
 
-              <div className="flex items-center gap-2">
-                {questions.length > 0 && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="outline" size="sm" onClick={() => handleExportPDF()}>
-                        <Download className="w-4 h-4 mr-2" />
-                        Export PDF
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Download your questions and answers as a PDF</p>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="sm" onClick={toggleTheme}>
-                      {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Toggle {isDark ? 'light' : 'dark'} mode</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            </div>
-          </div>
-        </header>
 
         <div className="container mx-auto px-4 py-8 mb-8">
           {/* Main content area */}

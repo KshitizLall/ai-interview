@@ -11,21 +11,22 @@ function Popover({
   return <PopoverPrimitive.Root data-slot="popover" {...props} />
 }
 
-function PopoverTrigger({
-  ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Trigger>) {
-  return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />
-}
+const PopoverTrigger = React.forwardRef<
+  Element,
+  React.ComponentProps<typeof PopoverPrimitive.Trigger>
+>(({ ...props }, ref) => {
+  return <PopoverPrimitive.Trigger ref={ref as any} data-slot="popover-trigger" {...props} />
+})
+PopoverTrigger.displayName = 'PopoverTrigger'
 
-function PopoverContent({
-  className,
-  align = 'center',
-  sideOffset = 4,
-  ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Content>) {
+const PopoverContent = React.forwardRef<
+  Element,
+  React.ComponentProps<typeof PopoverPrimitive.Content>
+>(({ className, align = 'center', sideOffset = 4, ...props }, ref) => {
   return (
     <PopoverPrimitive.Portal>
       <PopoverPrimitive.Content
+        ref={ref as any}
         data-slot="popover-content"
         align={align}
         sideOffset={sideOffset}
@@ -37,12 +38,15 @@ function PopoverContent({
       />
     </PopoverPrimitive.Portal>
   )
-}
+})
+PopoverContent.displayName = 'PopoverContent'
 
-function PopoverAnchor({
-  ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Anchor>) {
-  return <PopoverPrimitive.Anchor data-slot="popover-anchor" {...props} />
-}
+const PopoverAnchor = React.forwardRef<
+  Element,
+  React.ComponentProps<typeof PopoverPrimitive.Anchor>
+>(({ ...props }, ref) => {
+  return <PopoverPrimitive.Anchor ref={ref as any} data-slot="popover-anchor" {...props} />
+})
+PopoverAnchor.displayName = 'PopoverAnchor'
 
 export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor }

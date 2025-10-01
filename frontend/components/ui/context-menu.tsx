@@ -12,13 +12,15 @@ function ContextMenu({
   return <ContextMenuPrimitive.Root data-slot="context-menu" {...props} />
 }
 
-function ContextMenuTrigger({
-  ...props
-}: React.ComponentProps<typeof ContextMenuPrimitive.Trigger>) {
+const ContextMenuTrigger = React.forwardRef<
+  React.ElementRef<typeof ContextMenuPrimitive.Trigger>,
+  React.ComponentProps<typeof ContextMenuPrimitive.Trigger>
+>(({ ...props }, ref) => {
   return (
-    <ContextMenuPrimitive.Trigger data-slot="context-menu-trigger" {...props} />
+    <ContextMenuPrimitive.Trigger ref={ref} data-slot="context-menu-trigger" {...props} />
   )
-}
+})
+ContextMenuTrigger.displayName = 'ContextMenuTrigger'
 
 function ContextMenuGroup({
   ...props
@@ -53,16 +55,13 @@ function ContextMenuRadioGroup({
   )
 }
 
-function ContextMenuSubTrigger({
-  className,
-  inset,
-  children,
-  ...props
-}: React.ComponentProps<typeof ContextMenuPrimitive.SubTrigger> & {
-  inset?: boolean
-}) {
+const ContextMenuSubTrigger = React.forwardRef<
+  React.ElementRef<typeof ContextMenuPrimitive.SubTrigger>,
+  React.ComponentProps<typeof ContextMenuPrimitive.SubTrigger> & { inset?: boolean }
+>(({ className, inset, children, ...props }, ref) => {
   return (
     <ContextMenuPrimitive.SubTrigger
+      ref={ref}
       data-slot="context-menu-sub-trigger"
       data-inset={inset}
       className={cn(
@@ -75,7 +74,8 @@ function ContextMenuSubTrigger({
       <ChevronRightIcon className="ml-auto" />
     </ContextMenuPrimitive.SubTrigger>
   )
-}
+})
+ContextMenuSubTrigger.displayName = 'ContextMenuSubTrigger'
 
 function ContextMenuSubContent({
   className,

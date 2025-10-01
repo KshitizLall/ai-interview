@@ -11,11 +11,13 @@ function Drawer({
   return <DrawerPrimitive.Root data-slot="drawer" {...props} />
 }
 
-function DrawerTrigger({
-  ...props
-}: React.ComponentProps<typeof DrawerPrimitive.Trigger>) {
-  return <DrawerPrimitive.Trigger data-slot="drawer-trigger" {...props} />
-}
+const DrawerTrigger = React.forwardRef<
+  React.ElementRef<typeof DrawerPrimitive.Trigger>,
+  React.ComponentProps<typeof DrawerPrimitive.Trigger>
+>(({ ...props }, ref) => {
+  return <DrawerPrimitive.Trigger ref={ref} data-slot="drawer-trigger" {...props} />
+})
+DrawerTrigger.displayName = 'DrawerTrigger'
 
 function DrawerPortal({
   ...props

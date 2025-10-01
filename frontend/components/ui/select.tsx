@@ -18,22 +18,21 @@ function SelectGroup({
   return <SelectPrimitive.Group data-slot="select-group" {...props} />
 }
 
-function SelectValue({
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Value>) {
-  return <SelectPrimitive.Value data-slot="select-value" {...props} />
-}
+const SelectValue = React.forwardRef<
+  Element,
+  React.ComponentProps<typeof SelectPrimitive.Value>
+>(({ ...props }, ref) => {
+  return <SelectPrimitive.Value ref={ref as any} data-slot="select-value" {...props} />
+})
+SelectValue.displayName = 'SelectValue'
 
-function SelectTrigger({
-  className,
-  size = 'default',
-  children,
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
-  size?: 'sm' | 'default'
-}) {
+const SelectTrigger = React.forwardRef<
+  Element,
+  React.ComponentProps<typeof SelectPrimitive.Trigger> & { size?: 'sm' | 'default' }
+>(({ className, size = 'default', children, ...props }, ref) => {
   return (
     <SelectPrimitive.Trigger
+      ref={ref as any}
       data-slot="select-trigger"
       data-size={size}
       className={cn(
@@ -48,17 +47,17 @@ function SelectTrigger({
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   )
-}
+})
+SelectTrigger.displayName = 'SelectTrigger'
 
-function SelectContent({
-  className,
-  children,
-  position = 'popper',
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Content>) {
+const SelectContent = React.forwardRef<
+  Element,
+  React.ComponentProps<typeof SelectPrimitive.Content>
+>(({ className, children, position = 'popper', ...props }, ref) => {
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
+        ref={ref as any}
         data-slot="select-content"
         className={cn(
           'bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-50 max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border shadow-md',
@@ -83,7 +82,8 @@ function SelectContent({
       </SelectPrimitive.Content>
     </SelectPrimitive.Portal>
   )
-}
+})
+SelectContent.displayName = 'SelectContent'
 
 function SelectLabel({
   className,

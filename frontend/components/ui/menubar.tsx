@@ -48,12 +48,13 @@ function MenubarRadioGroup({
   )
 }
 
-function MenubarTrigger({
-  className,
-  ...props
-}: React.ComponentProps<typeof MenubarPrimitive.Trigger>) {
+const MenubarTrigger = React.forwardRef<
+  React.ElementRef<typeof MenubarPrimitive.Trigger>,
+  React.ComponentProps<typeof MenubarPrimitive.Trigger>
+>(({ className, ...props }, ref) => {
   return (
     <MenubarPrimitive.Trigger
+      ref={ref}
       data-slot="menubar-trigger"
       className={cn(
         'focus:bg-accent focus:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground flex items-center rounded-sm px-2 py-1 text-sm font-medium outline-hidden select-none',
@@ -62,7 +63,8 @@ function MenubarTrigger({
       {...props}
     />
   )
-}
+})
+MenubarTrigger.displayName = 'MenubarTrigger'
 
 function MenubarContent({
   className,
@@ -216,16 +218,13 @@ function MenubarSub({
   return <MenubarPrimitive.Sub data-slot="menubar-sub" {...props} />
 }
 
-function MenubarSubTrigger({
-  className,
-  inset,
-  children,
-  ...props
-}: React.ComponentProps<typeof MenubarPrimitive.SubTrigger> & {
-  inset?: boolean
-}) {
+const MenubarSubTrigger = React.forwardRef<
+  React.ElementRef<typeof MenubarPrimitive.SubTrigger>,
+  React.ComponentProps<typeof MenubarPrimitive.SubTrigger> & { inset?: boolean }
+>(({ className, inset, children, ...props }, ref) => {
   return (
     <MenubarPrimitive.SubTrigger
+      ref={ref}
       data-slot="menubar-sub-trigger"
       data-inset={inset}
       className={cn(
@@ -238,7 +237,8 @@ function MenubarSubTrigger({
       <ChevronRightIcon className="ml-auto h-4 w-4" />
     </MenubarPrimitive.SubTrigger>
   )
-}
+})
+MenubarSubTrigger.displayName = 'MenubarSubTrigger'
 
 function MenubarSubContent({
   className,
