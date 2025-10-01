@@ -206,40 +206,40 @@ curl -X POST "http://localhost:8000/auth/logout" \
   -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
 
-## API Curl Examples (use host http://0.0.0.0:10000)
+## API Curl Examples (use host http://localhost:10000)
 
-Below are PowerShell-ready curl.exe commands for all endpoints. These assume the backend is running on http://0.0.0.0:10000.
+Below are PowerShell-ready curl.exe commands for all endpoints. These assume the backend is running on http://localhost:10000.
 
 Auth - Signup
 ```powershell
-curl.exe -X POST "http://0.0.0.0:10000/auth/signup" `
+curl.exe -X POST "http://localhost:10000/auth/signup" `
   -H "Content-Type: application/json" `
   -d '{"email":"test@example.com","password":"secret123","name":"Test User"}'
 ```
 
 Auth - Login
 ```powershell
-curl.exe -X POST "http://0.0.0.0:10000/auth/login" `
+curl.exe -X POST "http://localhost:10000/auth/login" `
   -H "Content-Type: application/json" `
   -d '{"email":"test@example.com","password":"secret123"}'
 ```
 
 Auth - Logout
 ```powershell
-curl.exe -X POST "http://0.0.0.0:10000/auth/logout" `
+curl.exe -X POST "http://localhost:10000/auth/logout" `
   -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
 
 Upload resume file (replace path to your file)
 ```powershell
-curl.exe -X POST "http://0.0.0.0:10000/interview/upload-file" `
+curl.exe -X POST "http://localhost:10000/interview/upload-file" `
   -H "Accept: application/json" `
   -F "file=@C:\path\to\resume.pdf"
 ```
 
 Generate questions (combined mode)
 ```powershell
-curl.exe -X POST "http://0.0.0.0:10000/interview/generate-questions" `
+curl.exe -X POST "http://localhost:10000/interview/generate-questions" `
   -H "Content-Type: application/json" `
   -d '{
     "resume_text": "Experienced backend engineer...",
@@ -252,7 +252,7 @@ curl.exe -X POST "http://0.0.0.0:10000/interview/generate-questions" `
 
 Generate one answer for a question
 ```powershell
-curl.exe -X POST "http://0.0.0.0:10000/interview/generate-answer" `
+curl.exe -X POST "http://localhost:10000/interview/generate-answer" `
   -H "Content-Type: application/json" `
   -d '{
     "question": "Tell me about a time you led a project.",
@@ -262,7 +262,7 @@ curl.exe -X POST "http://0.0.0.0:10000/interview/generate-answer" `
 
 Generate bulk answers
 ```powershell
-curl.exe -X POST "http://0.0.0.0:10000/interview/generate-bulk-answers" `
+curl.exe -X POST "http://localhost:10000/interview/generate-bulk-answers" `
   -H "Content-Type: application/json" `
   -d '{
     "questions": [
@@ -276,7 +276,7 @@ curl.exe -X POST "http://0.0.0.0:10000/interview/generate-bulk-answers" `
 
 Export to PDF
 ```powershell
-curl.exe -X POST "http://0.0.0.0:10000/interview/export-pdf" `
+curl.exe -X POST "http://localhost:10000/interview/export-pdf" `
   -H "Content-Type: application/json" `
   -d '{
     "questions": [
@@ -290,8 +290,8 @@ curl.exe -X POST "http://0.0.0.0:10000/interview/export-pdf" `
 
 Health endpoints
 ```powershell
-curl.exe "http://0.0.0.0:10000/health"
-curl.exe "http://0.0.0.0:10000/interview/health"
+curl.exe "http://localhost:10000/health"
+curl.exe "http://localhost:10000/interview/health"
 ```
 
 WebSocket

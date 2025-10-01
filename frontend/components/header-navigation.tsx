@@ -2,6 +2,32 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { FileText, Menu, X } from "lucide-react"
 import { useState } from "react"
+import { useAuth } from "@/hooks/use-auth"
+
+function AuthActions({ isMobile }: { isMobile?: boolean }) {
+  const { token, logout } = useAuth()
+
+  if (token) {
+    return (
+      <>
+        <Button variant="ghost" size="sm" onClick={() => logout()}>
+          Logout
+        </Button>
+      </>
+    )
+  }
+
+  return (
+    <>
+      <Link href="/auth/login">
+        <Button variant="ghost" size={isMobile ? 'sm' : 'sm'}>Login</Button>
+      </Link>
+      <Link href="/auth/signup">
+        <Button size={isMobile ? 'sm' : 'sm'}>Sign up</Button>
+      </Link>
+    </>
+  )
+}
 
 export function HeaderNavigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -43,7 +69,7 @@ export function HeaderNavigation() {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-3">
-            {/* Authentication buttons removed */}
+            <AuthActions />
           </div>
 
           {/* Mobile Menu Button */}
@@ -106,7 +132,7 @@ export function HeaderNavigation() {
                 </Link>
               </div>
               <div className="flex gap-3 pt-4 border-t border-border/40">
-                {/* Authentication buttons removed */}
+                <AuthActions isMobile />
               </div>
             </nav>
           </div>
