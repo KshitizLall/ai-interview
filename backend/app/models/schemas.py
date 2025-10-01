@@ -112,6 +112,38 @@ class PDFExportResponse(BaseModel):
     file_size: int
     generation_time: float
 
+# User / Auth Models
+class UserCreate(BaseModel):
+    name: Optional[str] = None
+    email: str
+    password: str
+
+
+class UserInDB(BaseModel):
+    id: Optional[str]
+    name: Optional[str] = None
+    email: str
+    password_hash: str
+    tokens: Optional[List[str]] = []
+    created_at: datetime = datetime.now()
+    updated_at: datetime = datetime.now()
+
+
+class UserPublic(BaseModel):
+    id: Optional[str]
+    name: Optional[str] = None
+    email: str
+    created_at: datetime
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+class LogoutResponse(BaseModel):
+    detail: str
+
 # Error Models
 class ErrorResponse(BaseModel):
     error: str

@@ -19,5 +19,12 @@ reportlab==4.4.4
 # OpenAI integration
 openai==1.108.1
 
-# Environment configuration
+# Environment configuration / Mongo / Auth
 python-dotenv==1.1.1
+motor==3.7.1
+passlib[bcrypt]==1.7.4
+bcrypt==4.2.0
+python-jose[cryptography]==3.3.0
+
+# (Optional but recommended for email validation in signup)
+email-validator==2.2.0
