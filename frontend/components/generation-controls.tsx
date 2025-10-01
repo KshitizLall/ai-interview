@@ -51,16 +51,7 @@ const DIFFICULTY_LEVELS = [
   { value: "expert", label: "Expert", color: "bg-red-100 text-red-800" }
 ]
 
-const POSITION_LEVELS = [
-  { value: "entry", label: "Entry Level" },
-  { value: "junior", label: "Junior" },
-  { value: "mid", label: "Mid Level" },
-  { value: "senior", label: "Senior" },
-  { value: "lead", label: "Lead" },
-  { value: "manager", label: "Manager" },
-  { value: "director", label: "Director" },
-  { value: "executive", label: "Executive" }
-]
+
 
 export function GenerationControls({
   resumeText,
@@ -84,9 +75,6 @@ export function GenerationControls({
   // Advanced options
   const [selectedQuestionTypes, setSelectedQuestionTypes] = useState<string[]>([])
   const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>([])
-  const [focusAreas, setFocusAreas] = useState("")
-  const [companyName, setCompanyName] = useState("")
-  const [positionLevel, setPositionLevel] = useState("")
 
   const handleTypeToggle = (type: string) => {
     setSelectedQuestionTypes(prev =>
@@ -121,10 +109,7 @@ export function GenerationControls({
           question_count: questionCount,
           include_answers: includeAnswers,
           question_types: selectedQuestionTypes.length > 0 ? selectedQuestionTypes : undefined,
-          difficulty_levels: selectedDifficulties.length > 0 ? selectedDifficulties : undefined,
-          focus_areas: focusAreas.trim() ? focusAreas.split(',').map(s => s.trim()) : undefined,
-          company_name: companyName.trim() || undefined,
-          position_level: positionLevel || undefined
+          difficulty_levels: selectedDifficulties.length > 0 ? selectedDifficulties : undefined
         }
 
         if (isConnected && generateQuestions) {
@@ -137,10 +122,7 @@ export function GenerationControls({
               count: questionCount,
               include_answers: includeAnswers,
               question_types: request.question_types,
-              difficulty_levels: request.difficulty_levels,
-              focus_areas: request.focus_areas,
-              company_name: request.company_name,
-              position_level: request.position_level
+              difficulty_levels: request.difficulty_levels
             }
           })
 
@@ -195,10 +177,10 @@ export function GenerationControls({
                 </Badge>
               </div>
               <div className="flex items-center gap-2">
-                {!isConnected && (
-                  <Badge variant="outline" className="text-xs">
-                    <WifiOff className="w-3 h-3 mr-1" />
-                    Offline
+                {isConnected && (
+                  <Badge variant="default" className="text-xs">
+                    <Sparkles className="w-3 h-3 mr-1" />
+                    Real-time
                   </Badge>
                 )}
                 {/* Quick generation buttons when collapsed */}
@@ -325,9 +307,9 @@ export function GenerationControls({
               <div className="flex items-center gap-2">
                 <Settings className="w-3 h-3" />
                 <span className="text-sm font-medium">Advanced Options</span>
-                {(selectedQuestionTypes.length > 0 || selectedDifficulties.length > 0 || companyName || positionLevel) && (
+                {(selectedQuestionTypes.length > 0 || selectedDifficulties.length > 0) && (
                   <Badge variant="secondary" className="text-xs ml-auto">
-                    {selectedQuestionTypes.length + selectedDifficulties.length + (companyName ? 1 : 0) + (positionLevel ? 1 : 0)} filters
+                    {selectedQuestionTypes.length + selectedDifficulties.length} filters
                   </Badge>
                 )}
               </div>
@@ -369,44 +351,7 @@ export function GenerationControls({
                   </div>
                 </div>
 
-                {/* Compact Context Information */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <Label className="text-xs">Company</Label>
-                    <Input
-                      placeholder="Company name"
-                      value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
-                      className="h-7 text-sm"
-                    />
-                  </div>
 
-                  <div className="space-y-1">
-                    <Label className="text-xs">Level</Label>
-                    <Select value={positionLevel} onValueChange={setPositionLevel}>
-                      <SelectTrigger className="h-7">
-                        <SelectValue placeholder="Position level" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {POSITION_LEVELS.map((level) => (
-                          <SelectItem key={level.value} value={level.value}>
-                            {level.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <Label className="text-xs">Focus Areas</Label>
-                  <Textarea
-                    placeholder="React, Node.js, System Design..."
-                    value={focusAreas}
-                    onChange={(e) => setFocusAreas(e.target.value)}
-                    className="min-h-[50px] resize-none text-sm"
-                  />
-                </div>
               </div>
             </div>
 
