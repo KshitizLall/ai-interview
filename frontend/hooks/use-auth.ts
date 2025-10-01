@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { authService } from '@/lib/auth-service'
 
 const TOKEN_KEY = 'ib_access_token'
+const REMEMBER_KEY = 'ib_remember_token'
 
 export function useAuth() {
   const [token, setToken] = useState<string | null>(null)
@@ -11,13 +12,36 @@ export function useAuth() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const t = localStorage.getItem(TOKEN_KEY)
-    if (t) setToken(t)
+    // Check for both session and persistent storage
+    const sessionToken = sessionStorage.getItem(TOKEN_KEY)
+    const persistentToken = localStorage.getItem(REMEMBER_KEY)
+    
+    if (sessionToken) {
+      setToken(sessionToken)
+    } else if (persistentToken) {
+      setToken(persistentToken)
+      // Move to session storage for current session
+      sessionStorage.setItem(TOKEN_KEY, persistentToken)
+    }
   }, [])
 
-  const saveToken = useCallback((t: string | null) => {
-    if (t) localStorage.setItem(TOKEN_KEY, t)
-    else localStorage.removeItem(TOKEN_KEY)
+  const saveToken = useCallback((t: string | null, remember: boolean = false) => {
+    if (t) {
+      // Always save to session storage
+      sessionStorage.setItem(TOKEN_KEY, t)
+      
+      if (remember) {
+        // Save to persistent storage if remember me is checked
+        localStorage.setItem(REMEMBER_KEY, t)
+      } else {
+        // Remove from persistent storage if not remembering
+        localStorage.removeItem(REMEMBER_KEY)
+      }
+    } else {
+      // Clear all storage on logout
+      sessionStorage.removeItem(TOKEN_KEY)
+      localStorage.removeItem(REMEMBER_KEY)
+    }
     setToken(t)
   }, [])
 
@@ -26,7 +50,7 @@ export function useAuth() {
     setError(null)
     try {
       const res = await authService.signup({ email, password, name })
-      saveToken(res.access_token)
+      saveToken(res.access_token, false) // Don't remember by default for signup
       return res
     } catch (err: any) {
       setError(err?.message || 'Signup failed')
@@ -36,12 +60,12 @@ export function useAuth() {
     }
   }, [saveToken])
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string, remember: boolean = false) => {
     setLoading(true)
     setError(null)
     try {
       const res = await authService.login(email, password)
-      saveToken(res.access_token)
+      saveToken(res.access_token, remember)
       return res
     } catch (err: any) {
       setError(err?.message || 'Login failed')
@@ -60,7 +84,7 @@ export function useAuth() {
     } catch (err) {
       // ignore errors on logout
     } finally {
-      saveToken(null)
+      saveToken(null, false)
       setLoading(false)
     }
   }, [token, saveToken])
