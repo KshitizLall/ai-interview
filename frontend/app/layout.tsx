@@ -3,6 +3,7 @@ import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import { Analytics } from '@vercel/analytics/next'
 import { WebSocketProvider } from '@/components/websocket-provider'
+import { Toaster } from 'sonner'
 import './globals.css'
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
@@ -24,6 +25,18 @@ export default function RootLayout({
         <WebSocketProvider>
           {children}
         </WebSocketProvider>
+        <Toaster 
+          position="bottom-right"
+          expand={false}
+          richColors
+          toastOptions={{
+            duration: 4000,
+            style: {
+              color: 'hsl(var(--foreground))',
+              border: '1px solid hsl(var(--border))',
+            },
+          }}
+        />
         <Analytics />
         <SpeedInsights />
       </body>

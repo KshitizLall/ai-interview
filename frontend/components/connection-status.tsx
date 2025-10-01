@@ -23,7 +23,7 @@ export function ConnectionStatus({
       case 'connected':
         return {
           icon: Wifi,
-          label: 'Connected',
+          label: 'Real-time Mode',
           color: 'bg-green-500',
           badgeVariant: 'default' as const,
           textColor: 'text-green-600'
@@ -32,7 +32,7 @@ export function ConnectionStatus({
       case 'reconnecting':
         return {
           icon: Loader2,
-          label: status === 'connecting' ? 'Connecting...' : 'Reconnecting...',
+          label: 'Connecting...',
           color: 'bg-yellow-500',
           badgeVariant: 'secondary' as const,
           textColor: 'text-yellow-600',
@@ -40,11 +40,11 @@ export function ConnectionStatus({
         }
       case 'disconnected':
         return {
-          icon: WifiOff,
-          label: 'Disconnected',
-          color: 'bg-gray-500',
-          badgeVariant: 'outline' as const,
-          textColor: 'text-gray-600'
+          icon: Wifi,
+          label: 'Standard Mode',
+          color: 'bg-blue-500',
+          badgeVariant: 'secondary' as const,
+          textColor: 'text-blue-600'
         }
       case 'error':
         return {
@@ -56,11 +56,11 @@ export function ConnectionStatus({
         }
       default:
         return {
-          icon: WifiOff,
-          label: 'Unknown',
-          color: 'bg-gray-500',
-          badgeVariant: 'outline' as const,
-          textColor: 'text-gray-600'
+          icon: Wifi,
+          label: 'Standard Mode',
+          color: 'bg-blue-500',
+          badgeVariant: 'secondary' as const,
+          textColor: 'text-blue-600'
         }
     }
   }
@@ -143,9 +143,9 @@ export function ConnectionStatus({
 
       {showDetails && (
         <div className="text-xs text-muted-foreground space-y-1">
-          <div>Status: {status}</div>
-          {connectionId && <div>ID: {connectionId}</div>}
-          <div>Real-time features: {isConnected ? 'Active' : 'Inactive'}</div>
+          <div>Mode: {isConnected ? 'Real-time' : 'Standard HTTP API'}</div>
+          {connectionId && <div>Session: {connectionId.slice(0, 8)}...</div>}
+          <div>Status: {isConnected ? 'WebSocket connected' : 'Using HTTP fallback'}</div>
         </div>
       )}
     </div>

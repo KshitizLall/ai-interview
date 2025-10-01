@@ -1,35 +1,29 @@
 "use client"
 
+import { BulkAnswerGenerator } from "@/components/bulk-answer-generator"
+import { ConnectionStatus } from "@/components/connection-status"
 import { FileUploadZone } from "@/components/file-upload-zone"
+import { Footer } from "@/components/footer"
+import { GenerationControls } from "@/components/generation-controls"
+import { HeaderNavigation } from "@/components/header-navigation"
 import { QuestionsList } from "@/components/questions-list"
 import { SavedQuestions } from "@/components/saved-questions"
-import { ConnectionStatus } from "@/components/connection-status"
-import { GenerationControls } from "@/components/generation-controls"
-import { BulkAnswerGenerator } from "@/components/bulk-answer-generator"
-import { HeaderNavigation } from "@/components/header-navigation"
-import { Footer } from "@/components/footer"
 import { useWebSocketContext } from "@/components/websocket-provider"
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Progress } from "@/components/ui/progress"
-import { Download, FileText, Moon, Sun, Briefcase, Sparkles, Wifi, WifiOff, Clock } from "lucide-react"
+
 import { Badge } from "@/components/ui/badge"
-import { useEffect, useState, useCallback } from "react"
-import { apiService } from "@/lib/api-service"
+import { Button } from "@/components/ui/button"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useReducedMotion } from "@/hooks/use-reduced-motion"
+import { apiService } from "@/lib/api-service"
+import { Briefcase, Clock, Download, FileText, HelpCircle, Moon, Sparkles, Sun } from "lucide-react"
+import { useEffect, useState } from "react"
+import { toast } from "sonner"
 
 export default function HomePage() {
   const [isDark, setIsDark] = useState(false)
-  const [titleAnimationComplete, setTitleAnimationComplete] = useState(false)
+
   const prefersReducedMotion = useReducedMotion()
   const [resumeFile, setResumeFile] = useState<File | null>(null)
   const [resumeText, setResumeText] = useState("")
@@ -39,7 +33,7 @@ export default function HomePage() {
   const [savedQuestions, setSavedQuestions] = useState<any[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
   const [activeTab, setActiveTab] = useState("questions")
-  const [isGenerationPopupOpen, setIsGenerationPopupOpen] = useState(false)
+  const [showInputs, setShowInputs] = useState(false)
 
   // WebSocket integration
   const { isConnected, progressUpdate } = useWebSocketContext()
@@ -95,9 +89,7 @@ export default function HomePage() {
       document.documentElement.classList.toggle("dark", shouldBeDark)
     }
 
-    // Optimize typewriter animation
-    const timer = setTimeout(() => setTitleAnimationComplete(true), 1000) // Reduced from 2000ms
-    return () => clearTimeout(timer)
+
   }, [])
 
   const toggleTheme = () => {
@@ -113,9 +105,16 @@ export default function HomePage() {
 
   const handleExportPDF = async () => {
     if (!questions || questions.length === 0) {
-      alert('No questions to export')
+      toast.error('No questions to export', {
+        description: 'Generate some questions first before exporting'
+      })
       return
     }
+
+    // Show loading toast
+    const loadingToast = toast.loading('Preparing PDF export...', {
+      description: 'Generating your interview preparation document'
+    })
 
     try {
       // Determine job title from context or use default
@@ -139,11 +138,17 @@ export default function HomePage() {
       // Download the PDF with success feedback
       apiService.downloadPDF(response.download_url, response.filename)
 
-      // Optional: Show success message
-      console.log(`PDF exported successfully: ${response.filename} (${(response.file_size / 1024).toFixed(1)} KB)`)
+      // Show success toast
+      toast.success('PDF exported successfully!', {
+        id: loadingToast,
+        description: `${response.filename} (${(response.file_size / 1024).toFixed(1)} KB) downloaded`
+      })
     } catch (error) {
       console.error('PDF export failed:', error)
-      alert('Failed to export PDF. Please try again.')
+      toast.error('PDF export failed', {
+        id: loadingToast,
+        description: 'Please try again or check your connection'
+      })
     }
   }
 
@@ -153,162 +158,160 @@ export default function HomePage() {
       <HeaderNavigation />
 
       <div className="flex-1">
-        {/* Top Bar */}
+        {/* Simplified Top Bar */}
         <header className="border-b border-border/30 bg-card/30 backdrop-blur-md glass-card-subtle sticky top-0 z-50">
-          <div className="container mx-auto px-4 py-3 md:py-4">
-            {/* Desktop Layout */}
-            <div className="hidden md:flex items-center justify-between">
+          <div className="container mx-auto px-4 py-3">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <ConnectionStatus size="sm" />
+                <span className="text-sm text-muted-foreground hidden sm:inline">AI Interview Prep</span>
               </div>
 
               <div className="flex items-center gap-2">
-                <Dialog open={isGenerationPopupOpen} onOpenChange={setIsGenerationPopupOpen}>
-                  <DialogTrigger asChild>
-                    <Button size="sm">
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Generate Questions
+                {questions.length > 0 && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="outline" size="sm" onClick={() => handleExportPDF()}>
+                        <Download className="w-4 h-4 mr-2" />
+                        Export PDF
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Download your questions and answers as a PDF</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="sm" onClick={toggleTheme}>
+                      {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                     </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-7xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>Generate Questions</DialogTitle>
-                      <DialogDescription>
-                        Upload your resume and job description to generate tailored interview questions.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <InputsPane
-                      resumeFile={resumeFile}
-                      setResumeFile={setResumeFile}
-                      resumeText={resumeText}
-                      setResumeText={setResumeText}
-                      jobDescription={jobDescription}
-                      setJobDescription={setJobDescription}
-                      isGenerating={isGenerating}
-                      setIsGenerating={setIsGenerating}
-                      setQuestions={(questions: any[]) => {
-                        setQuestions(questions);
-                        if (questions.length > 0) {
-                          setIsGenerationPopupOpen(false);
-                        }
-                      }}
-                      setAnswers={setAnswers}
-                    />
-                  </DialogContent>
-                </Dialog>
-                <Button variant="outline" size="sm" onClick={() => handleExportPDF()}>
-                  <Download className="w-4 h-4 mr-2" />
-                  Export PDF
-                </Button>
-                <Button variant="ghost" size="sm" onClick={toggleTheme}>
-                  {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                </Button>
-              </div>
-            </div>
-
-            {/* Mobile Layout */}
-            <div className="md:hidden space-y-3">
-              {/* First Row: Logo, Title, Theme Toggle */}
-                <div className="flex items-center gap-2">
-                  <ConnectionStatus size="sm" />
-                  <Button variant="ghost" size="sm" onClick={toggleTheme}>
-                    {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                  </Button>
-                </div>
-
-              {/* Second Row: Action Buttons */}
-              <div className="flex flex-wrap gap-2 justify-center">
-                <Dialog open={isGenerationPopupOpen} onOpenChange={setIsGenerationPopupOpen}>
-                  <DialogTrigger asChild>
-                    <Button size="sm" className="flex-1 min-w-0">
-                      <Sparkles className="w-4 h-4 mr-1 flex-shrink-0" />
-                      <span className="truncate">Generate</span>
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-7xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>Generate Questions</DialogTitle>
-                      <DialogDescription>
-                        Upload your resume and job description to generate tailored interview questions.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <InputsPane
-                      resumeFile={resumeFile}
-                      setResumeFile={setResumeFile}
-                      resumeText={resumeText}
-                      setResumeText={setResumeText}
-                      jobDescription={jobDescription}
-                      setJobDescription={setJobDescription}
-                      isGenerating={isGenerating}
-                      setIsGenerating={setIsGenerating}
-                      setQuestions={(questions: any[]) => {
-                        setQuestions(questions);
-                        if (questions.length > 0) {
-                          setIsGenerationPopupOpen(false);
-                        }
-                      }}
-                      setAnswers={setAnswers}
-                    />
-                  </DialogContent>
-                </Dialog>
-                <Button variant="outline" size="sm" onClick={() => handleExportPDF()} className="flex-1 min-w-0">
-                  <Download className="w-4 h-4 mr-1 flex-shrink-0" />
-                  <span className="truncate">Export</span>
-                </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Toggle {isDark ? 'light' : 'dark'} mode</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
             </div>
           </div>
         </header>
 
-        <div className="container mx-auto px-4 py-4 md:py-6 mb-8">
-          {/* Main content area for displaying questions and answers */}
-          <OutputsPane
-            questions={questions}
-            answers={answers}
-            setAnswers={setAnswers}
-            savedQuestions={savedQuestions}
-            setSavedQuestions={setSavedQuestions}
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            resumeText={resumeText}
-            jobDescription={jobDescription}
-            isGenerationPopupOpen={isGenerationPopupOpen}
-            setIsGenerationPopupOpen={setIsGenerationPopupOpen}
-          />
+        <div className="container mx-auto px-4 py-8 mb-8">
+          {/* Main content area */}
+          {questions.length === 0 ? (
+            <div className="max-w-4xl mx-auto space-y-8">
+              {/* Clean Hero Section */}
+              <div className="text-center space-y-6">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-2xl mb-6">
+                  <Sparkles className="w-8 h-8 text-primary" />
+                </div>
+                <div className="space-y-4">
+                  <h1 className="text-3xl md:text-4xl font-bold">
+                    AI Interview Preparation
+                  </h1>
+                  <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                    Generate personalized interview questions from your resume, job description, or both. 
+                    Practice and prepare with confidence.
+                  </p>
+                </div>
+              </div>
+                
+                <InputsPane
+                  resumeFile={resumeFile}
+                  setResumeFile={setResumeFile}
+                  resumeText={resumeText}
+                  setResumeText={setResumeText}
+                  jobDescription={jobDescription}
+                  setJobDescription={setJobDescription}
+                  isGenerating={isGenerating}
+                  setIsGenerating={setIsGenerating}
+                  setQuestions={setQuestions}
+                  setAnswers={setAnswers}
+                />
+                
+                {/* Help Section */}
+                <div className="mt-12 max-w-4xl mx-auto">
+                  <div className="bg-card border rounded-lg p-6">
+                    <div className="flex items-center gap-2 mb-6">
+                      <HelpCircle className="w-5 h-5 text-primary" />
+                      <h3 className="text-lg font-semibold">Three Ways to Generate Questions</h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
+                      <div className="space-y-3">
+                        <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center mb-3">
+                          <FileText className="w-6 h-6 text-green-600 dark:text-green-400" />
+                        </div>
+                        <h4 className="font-semibold text-green-700 dark:text-green-300">Resume Only</h4>
+                        <p className="text-muted-foreground">Upload your resume to get questions about your experience, skills, and background. Perfect for general interview prep.</p>
+                        <div className="text-xs text-green-600 dark:text-green-400 font-medium">✓ Experience-based questions</div>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mb-3">
+                          <Briefcase className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <h4 className="font-semibold text-blue-700 dark:text-blue-300">Job Description Only</h4>
+                        <p className="text-muted-foreground">Paste a job description to get questions specific to that role's requirements and responsibilities.</p>
+                        <div className="text-xs text-blue-600 dark:text-blue-400 font-medium">✓ Role-specific questions</div>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center mb-3">
+                          <Sparkles className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                        </div>
+                        <h4 className="font-semibold text-purple-700 dark:text-purple-300">Combined Approach</h4>
+                        <p className="text-muted-foreground">Use both for the most personalized questions that match your experience to the specific role.</p>
+                        <div className="text-xs text-purple-600 dark:text-purple-400 font-medium">✓ Most personalized results</div>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-6 pt-6 border-t">
+                      <p className="text-xs text-muted-foreground text-center">
+                        <strong>Pro tip:</strong> Start with just your resume to get familiar with the tool, then add job descriptions for specific roles you're targeting.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              
+              {/* Get Started Button */}
+              <div className="flex justify-center">
+                <Button 
+                  onClick={() => setShowInputs(true)} 
+                  size="lg"
+                  className="px-8 py-3 text-lg font-medium"
+                >
+                  Get Started
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <OutputsPane
+              questions={questions}
+              answers={answers}
+              setAnswers={setAnswers}
+              savedQuestions={savedQuestions}
+              setSavedQuestions={setSavedQuestions}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              resumeText={resumeText}
+              jobDescription={jobDescription}
+              setQuestions={setQuestions}
+              resumeFile={resumeFile}
+              setResumeFile={setResumeFile}
+              setResumeText={setResumeText}
+              setJobDescription={setJobDescription}
+              isGenerating={isGenerating}
+              setIsGenerating={setIsGenerating}
+            />
+          )}
         </div>
-      </div>      {/* Footer */}
-      <Footer />
+        
+        {/* Footer */}
+        <Footer />
+      </div>
     </div>
   )
 }
 
-// Typewriter animation component (optimized)
-function TypewriterText({ text, onComplete }: { text: string; onComplete?: () => void }) {
-  const [displayText, setDisplayText] = useState("")
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const prefersReducedMotion = useReducedMotion()
 
-  useEffect(() => {
-    // Skip animation if reduced motion is preferred
-    if (prefersReducedMotion) {
-      setDisplayText(text)
-      onComplete?.()
-      return
-    }
-
-    if (currentIndex < text.length) {
-      const timeout = setTimeout(() => {
-        setDisplayText((prev) => prev + text[currentIndex])
-        setCurrentIndex((prev) => prev + 1)
-      }, 50) // Reduced from 100ms for faster animation
-      return () => clearTimeout(timeout)
-    } else if (onComplete) {
-      onComplete()
-    }
-  }, [currentIndex, text, onComplete, prefersReducedMotion])
-
-  return <span>{displayText}</span>
-}
 
 // Generation Controls Component
 function EnhancedGenerationControls({
@@ -344,7 +347,7 @@ function EnhancedGenerationControls({
   )
 }
 
-// Input pane component
+// Simplified Input Component
 function InputsPane({
   resumeFile,
   setResumeFile,
@@ -357,30 +360,39 @@ function InputsPane({
   setQuestions,
   setAnswers,
 }: any) {
+  const hasContent = resumeText.trim() || jobDescription.trim()
+
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4">
-        {/* Left panel with upload zones */}
-        <div className="space-y-6">
+    <div className="max-w-4xl mx-auto space-y-8">
+      {/* Simple Upload Areas */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h3 className="font-medium mb-3">Resume</h3>
           <FileUploadZone
-            title="Résumé"
+            title="Upload or paste your resume"
             file={resumeFile}
             setFile={setResumeFile}
             text={resumeText}
             setText={setResumeText}
             accept=".pdf,.docx,.txt"
           />
+        </div>
+        
+        <div>
+          <h3 className="font-medium mb-3">Job Description</h3>
           <FileUploadZone
-            title="Job Description"
+            title="Paste job description"
             text={jobDescription}
             setText={setJobDescription}
             isTextArea={true}
           />
         </div>
+      </div>
 
-        {/* Right panel with generation controls */}
-        <div>
-          <EnhancedGenerationControls
+      {/* Generate Button */}
+      {hasContent && (
+        <div className="text-center">
+          <GenerationControls
             resumeText={resumeText}
             jobDescription={jobDescription}
             isGenerating={isGenerating}
@@ -389,33 +401,12 @@ function InputsPane({
             setAnswers={setAnswers}
           />
         </div>
-      </div>
-
-      {/* Status indicator */}
-      <div className="bg-muted/50 rounded-lg p-4">
-        <div className="flex items-center justify-between">
-          <h4 className="font-medium text-sm">Ready to Generate</h4>
-          <div className="flex gap-4 text-xs">
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${resumeText.trim() ? 'bg-green-500' : 'bg-gray-300'}`} />
-              <span className={resumeText.trim() ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}>
-                Resume ({resumeText.length} chars)
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${jobDescription.trim() ? 'bg-green-500' : 'bg-gray-300'}`} />
-              <span className={jobDescription.trim() ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}>
-                Job Description ({jobDescription.length} chars)
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
+      )}
     </div>
-  );
+  )
 }
 
-// Output pane component
+// Clean Output Pane Component
 function OutputsPane({
   questions,
   answers,
@@ -426,200 +417,87 @@ function OutputsPane({
   setActiveTab,
   resumeText,
   jobDescription,
-  isGenerationPopupOpen,
-  setIsGenerationPopupOpen,
+  setQuestions,
+  resumeFile,
+  setResumeFile,
+  setResumeText,
+  setJobDescription,
+  isGenerating,
+  setIsGenerating,
 }: any) {
   const answeredCount = Object.keys(answers).filter((key) => answers[key]?.trim().length > 0).length
 
-  // Show hero section when no questions are generated
-  if (!questions || questions.length === 0) {
-    return (
-      <div className="min-h-[80vh] flex flex-col items-center justify-center text-center relative overflow-hidden">
-        {/* Background decorative elements */}
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl animate-pulse delay-1000" />
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-primary/3 to-purple-500/3 rounded-full blur-3xl" />
+  return (
+    <div className="w-full max-w-5xl mx-auto space-y-6">
+      {/* Simple Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">Your Questions</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            {answeredCount} of {questions?.length || 0} answered • {Math.round((answeredCount / (questions?.length || 1)) * 100)}% complete
+          </p>
         </div>
-
-        <div className="container mx-auto px-4 space-y-12 md:space-y-16 max-w-6xl">
-          {/* Hero Content */}
-          <div className="space-y-6 max-w-3xl mx-auto animate-fade-in-up">
-            <div className="relative">
-              <div className="w-32 h-32 mx-auto bg-gradient-to-br from-primary/20 to-primary/5 rounded-full flex items-center justify-center shadow-2xl shadow-primary/10 animate-float">
-                <div className="w-24 h-24 bg-gradient-to-br from-primary to-primary/80 rounded-full flex items-center justify-center">
-                  <Sparkles className="w-12 h-12 text-white animate-pulse" />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent leading-tight">
-                AI-Powered
-                <br />
-                <span className="bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
-                  Interview Prep
-                </span>
-              </h1>
-
-              <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed max-w-2xl mx-auto font-light">
-                Transform your interview preparation with AI-generated questions tailored to your resume and target role
-              </p>
-
-              <div className="flex items-center justify-center gap-6 pt-4">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  Smart Analysis
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse delay-300" />
-                  Personalized Questions
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse delay-600" />
-                  Practice Mode
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Premium CTA Section */}
-          <div className="space-y-8 animate-fade-in-up delay-500">
-            <div className="relative group">
-              {/* <div className="absolute -inset-1 bg-gradient-to-r from-primary to-blue-600 rounded-2xl blur opacity-30 group-hover:opacity-50 transition duration-300" /> */}
-              <Button
-                size="lg"
-                className="relative px-12 py-6 text-lg bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 rounded-xl shadow-2xl shadow-primary/25 hover:shadow-primary/40 transition-all duration-300 hover:scale-105"
-                onClick={() => setIsGenerationPopupOpen(true)}
-              >
-                <Sparkles className="w-6 h-6 mr-3 animate-pulse" />
-                Start Your Interview Prep Journey
-              </Button>
-            </div>
-
-            <div className="flex items-center justify-center gap-8 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-primary" />
-                Upload Resume
-              </div>
-              <div className="w-1 h-1 bg-muted-foreground rounded-full" />
-              <div className="flex items-center gap-2">
-                <Briefcase className="w-4 h-4 text-primary" />
-                Add Job Description
-              </div>
-              <div className="w-1 h-1 bg-muted-foreground rounded-full" />
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-primary" />
-                Generate Questions
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    )
-  }  return (
-    <div className="min-h-[80vh] flex flex-col">
-      {/* Enhanced Progress Header */}
-      <div className="mb-8 p-6 bg-gradient-to-r from-card/60 to-card/30 glass-card border border-border/30 rounded-2xl shadow-lg backdrop-blur-md">
-        <div className="space-y-4">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div className="space-y-2">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl flex items-center justify-center">
-                  <Briefcase className="w-5 h-5 text-primary" />
-                </div>
-                <h3 className="text-xl font-semibold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-                  Interview Preparation Progress
-                </h3>
-              </div>
-              <p className="text-sm text-muted-foreground ml-13">
-                {answeredCount} of {questions?.length || 0} questions completed
-              </p>
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <div className="flex items-center gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  <span className="text-green-600 dark:text-green-400 font-medium">
-                    {Math.round((answeredCount / (questions?.length || 1)) * 100)}% Complete
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">
-                    {Math.max(1, Math.ceil((questions?.length || 0 - answeredCount) * 2))} min remaining
-                  </span>
-                </div>
-              </div>
-
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full sm:w-auto">
-                <TabsList className="grid w-full grid-cols-2 sm:w-auto bg-muted/50">
-                  <TabsTrigger value="questions" className="text-xs md:text-sm font-medium">
-                    Questions & Answers
-                  </TabsTrigger>
-                  <TabsTrigger value="saved" className="text-xs md:text-sm font-medium">
-                    Saved ({savedQuestions?.length || 0})
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-          </div>
-
-          {/* Enhanced Progress Bar */}
-          <div className="space-y-2">
-            <div className="w-full bg-muted/50 rounded-full h-3 overflow-hidden">
-              <div
-                className="h-3 rounded-full bg-gradient-to-r from-primary to-blue-600 shadow-sm transition-all duration-500 ease-out relative"
-                style={{ width: `${questions?.length > 0 ? (answeredCount / questions.length) * 100 : 0}%` }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent rounded-full" />
-              </div>
-            </div>
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Started</span>
-              <span className="font-medium">
-                {questions?.length > 0 ? `${answeredCount}/${questions.length}` : '0/0'}
-              </span>
-              <span>Complete</span>
-            </div>
-          </div>
+        <div className="flex items-center gap-3">
+          {/* Bulk Answer Generator */}
+          {activeTab === "questions" && questions?.length > 0 && (
+            <BulkAnswerGenerator
+              questions={questions}
+              resumeText={resumeText}
+              jobDescription={jobDescription}
+              answers={answers}
+              setAnswers={setAnswers}
+            />
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setQuestions([])
+              setAnswers({})
+              setSavedQuestions([])
+              toast.success('New session started!')
+            }}
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            New Session
+          </Button>
         </div>
       </div>
 
-      {/* Bulk Answer Generator */}
-      {activeTab === "questions" && questions?.length > 0 && (
-        <div className="mb-6">
-          <BulkAnswerGenerator
-            questions={questions}
-            resumeText={resumeText}
-            jobDescription={jobDescription}
-            answers={answers}
-            setAnswers={setAnswers}
-          />
-        </div>
-      )}
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="w-full justify-start h-10">
+          <TabsTrigger value="questions" className="flex items-center gap-2">
+            <FileText className="w-4 h-4" />
+            Questions ({questions?.length || 0})
+          </TabsTrigger>
+          <TabsTrigger value="saved" className="flex items-center gap-2">
+            <Briefcase className="w-4 h-4" />
+            Saved ({savedQuestions?.length || 0})
+          </TabsTrigger>
+        </TabsList>
 
-      <div className="flex-1">
-        {activeTab === "questions" ? (
-          <QuestionsList
-            questions={questions}
-            savedQuestions={savedQuestions}
-            setSavedQuestions={setSavedQuestions}
-            answers={answers}
-            setAnswers={setAnswers}
-            resumeText={resumeText}
-            jobDescription={jobDescription}
-          />
-        ) : (
-          <SavedQuestions
-            savedQuestions={savedQuestions}
-            setSavedQuestions={setSavedQuestions}
-            answers={answers}
-          />
-        )}
-      </div>
+        {/* Content */}
+        <div className="mt-6">
+          {activeTab === "questions" ? (
+            <QuestionsList
+              questions={questions}
+              savedQuestions={savedQuestions}
+              setSavedQuestions={setSavedQuestions}
+              answers={answers}
+              setAnswers={setAnswers}
+              resumeText={resumeText}
+              jobDescription={jobDescription}
+            />
+          ) : (
+            <SavedQuestions
+              savedQuestions={savedQuestions}
+              setSavedQuestions={setSavedQuestions}
+              answers={answers}
+            />
+          )}
+        </div>
+      </Tabs>
     </div>
   )
 }

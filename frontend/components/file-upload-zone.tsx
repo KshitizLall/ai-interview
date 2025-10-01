@@ -143,7 +143,7 @@ export function FileUploadZone({
         {!isTextArea && (
           <div
             className={cn(
-              "relative border-2 border-dashed rounded-lg p-4 md:p-8 text-center transition-all duration-300",
+              "relative border-2 border-dashed rounded-lg p-4 md:p-8 text-center transition-all duration-300 min-h-[200px] flex items-center justify-center",
               isDragOver
                 ? "border-primary bg-primary/5 scale-105 shadow-lg animate-pulse-glow"
                 : "border-muted-foreground/25 hover:border-muted-foreground/50",
