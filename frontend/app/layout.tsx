@@ -3,6 +3,7 @@ import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import { Analytics } from '@vercel/analytics/next'
 import { WebSocketProvider } from '@/components/websocket-provider'
+import { AuthProvider } from '@/components/auth-provider'
 import { Toaster } from 'sonner'
 import './globals.css'
 import { SpeedInsights } from '@vercel/speed-insights/next';
@@ -22,9 +23,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
-        <WebSocketProvider>
-          {children}
-        </WebSocketProvider>
+        <AuthProvider>
+          <WebSocketProvider>
+            {children}
+          </WebSocketProvider>
+        </AuthProvider>
         <Toaster 
           position="bottom-right"
           expand={false}

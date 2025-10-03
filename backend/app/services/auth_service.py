@@ -6,7 +6,7 @@ from bson import ObjectId
 
 from app.core.mongo import get_database
 from app.core.config import settings
-from app.models.schemas import UserCreate, UserInDB
+from app.models.schemas import UserCreate, UserInDB, UserProfileUpdate, CreditCheckRequest, CreditDeductRequest
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -45,6 +45,9 @@ class AuthService:
             "email": user.email,
             "password_hash": hash_password(user.password),
             "tokens": [],
+            "credits": 50,  # Default credits for new users
+            "sessions": [],
+            "usage_stats": {},
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow()
         }
@@ -74,6 +77,89 @@ class AuthService:
             return None
         user_doc["id"] = str(user_doc.get("_id"))
         return UserInDB(**user_doc)
+
+    async def update_user_profile(self, user_id: str, profile_update: UserProfileUpdate) -> Optional[UserInDB]:
+        """Update user profile information"""
+        update_data = {k: v for k, v in profile_update.dict().items() if v is not None}
+        update_data["updated_at"] = datetime.utcnow()
+        
+        result = await self.users.update_one(
+            {"_id": ObjectId(user_id)}, 
+            {"$set": update_data}
+        )
+        
+        if result.modified_count == 0:
+            return None
+            
+        return await self.get_user_by_id(user_id)
+
+    async def check_credits(self, user_id: str, required_credits: int = 1) -> dict:
+        """Check if user has enough credits for an operation"""
+        user = await self.get_user_by_id(user_id)
+        if not user:
+            return {"has_credits": False, "current_credits": 0, "required_credits": required_credits}
+        
+        return {
+            "has_credits": user.credits >= required_credits,
+            "current_credits": user.credits,
+            "required_credits": required_credits
+        }
+
+    async def deduct_credits(self, user_id: str, cost: int = 1) -> dict:
+        """Deduct credits from user account"""
+        user = await self.get_user_by_id(user_id)
+        if not user or user.credits < cost:
+            return {"success": False, "new_credit_balance": user.credits if user else 0}
+        
+        new_credits = max(0, user.credits - cost)
+        result = await self.users.update_one(
+            {"_id": ObjectId(user_id)}, 
+            {
+                "$set": {"credits": new_credits, "updated_at": datetime.utcnow()},
+                "$inc": {"usage_stats.total_operations": 1}
+            }
+        )
+        
+        return {
+            "success": result.modified_count > 0,
+            "new_credit_balance": new_credits
+        }
+
+    async def add_credits(self, user_id: str, amount: int) -> dict:
+        """Add credits to user account (for admin or purchase operations)"""
+        result = await self.users.update_one(
+            {"_id": ObjectId(user_id)}, 
+            {
+                "$inc": {"credits": amount},
+                "$set": {"updated_at": datetime.utcnow()}
+            }
+        )
+        
+        user = await self.get_user_by_id(user_id)
+        return {
+            "success": result.modified_count > 0,
+            "new_credit_balance": user.credits if user else 0
+        }
+
+    async def add_session_to_user(self, user_id: str, session_id: str):
+        """Add a session ID to user's session list"""
+        await self.users.update_one(
+            {"_id": ObjectId(user_id)}, 
+            {
+                "$push": {"sessions": session_id},
+                "$set": {"updated_at": datetime.utcnow()}
+            }
+        )
+
+    async def remove_session_from_user(self, user_id: str, session_id: str):
+        """Remove a session ID from user's session list"""
+        await self.users.update_one(
+            {"_id": ObjectId(user_id)}, 
+            {
+                "$pull": {"sessions": session_id},
+                "$set": {"updated_at": datetime.utcnow()}
+            }
+        )
 
 
 auth_service = AuthService()

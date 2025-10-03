@@ -8,14 +8,19 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
+import { useAuth } from "@/components/auth-provider"
+import { AuthModal } from "@/components/auth-modal"
 import {
   Sparkles,
   Loader2,
   CheckCircle,
   AlertCircle,
-  MessageSquare
+  MessageSquare,
+  Lock,
+  Zap
 } from "lucide-react"
 import { apiService, Question } from "@/lib/api-service"
+import { toast } from "sonner"
 
 interface BulkAnswerGeneratorProps {
   questions: Question[]
@@ -57,7 +62,9 @@ export function BulkAnswerGenerator({
   setAnswers,
   className
 }: BulkAnswerGeneratorProps) {
+  const { isAuthenticated, canGenerateAnswers, updateAnonymousUsage, deductCredits } = useAuth()
   const [isGenerating, setIsGenerating] = useState(false)
+  const [showAuthModal, setShowAuthModal] = useState(false)
   const [answerStyle, setAnswerStyle] = useState<string>("professional")
   const [error, setError] = useState<string | null>(null)
   const [progress, setProgress] = useState(0)
@@ -73,6 +80,18 @@ export function BulkAnswerGenerator({
 
     if (targetQuestions.length === 0) {
       setError("No questions to generate answers for")
+      return
+    }
+
+    // Check if user can generate answers (credit/usage limits)
+    if (!canGenerateAnswers(targetQuestions.length)) {
+      if (isAuthenticated) {
+        setError(`Insufficient credits to generate ${targetQuestions.length} answers`)
+        toast.error(`Need ${targetQuestions.length} credits to generate answers`)
+      } else {
+        setError("Free limit reached. Please sign up to continue.")
+        setShowAuthModal(true)
+      }
       return
     }
 
@@ -97,10 +116,18 @@ export function BulkAnswerGenerator({
       clearInterval(progressInterval)
       setProgress(100)
 
+      // Deduct credits/update usage for successful generation
+      const answersGenerated = Object.keys(response.answers).length
+      if (isAuthenticated) {
+        await deductCredits('generate_answers', answersGenerated)
+      } else {
+        updateAnonymousUsage({ answers_generated: answersGenerated })
+      }
+
       // Update answers
       const newAnswers = { ...answers, ...response.answers }
       setAnswers(newAnswers)
-      setGeneratedCount(Object.keys(response.answers).length)
+      setGeneratedCount(answersGenerated)
 
       setTimeout(() => {
         setProgress(0)
@@ -145,6 +172,35 @@ export function BulkAnswerGenerator({
       </CardHeader>
 
       <CardContent className="space-y-4">
+        {/* Credit/Usage Status */}
+        {!isAuthenticated && !canGenerateAnswers(unansweredQuestions.length) && unansweredQuestions.length > 0 && (
+          <Alert className="border-orange-200 bg-orange-50">
+            <Lock className="h-4 w-4 text-orange-600" />
+            <AlertDescription className="text-orange-800">
+              <div className="space-y-2">
+                <p><strong>Free limit reached!</strong> Cannot generate {unansweredQuestions.length} answers.</p>
+                <Button 
+                  size="sm" 
+                  onClick={() => setShowAuthModal(true)}
+                  className="w-full"
+                >
+                  <Zap className="w-4 h-4 mr-2" />
+                  Sign up for 50 free credits
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {isAuthenticated && !canGenerateAnswers(unansweredQuestions.length) && unansweredQuestions.length > 0 && (
+          <Alert className="border-red-200 bg-red-50">
+            <Lock className="h-4 w-4 text-red-600" />
+            <AlertDescription className="text-red-800">
+              <p><strong>Insufficient credits!</strong> You need {unansweredQuestions.length} credits to generate answers.</p>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {error && (
           <Alert variant="destructive">
             <AlertCircle className="w-4 h-4" />
@@ -245,6 +301,12 @@ export function BulkAnswerGenerator({
           </div>
         </div>
       </CardContent>
+      
+      <AuthModal 
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        initialTab="signup"
+      />
     </Card>
   )
 }

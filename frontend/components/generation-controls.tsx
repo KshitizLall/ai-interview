@@ -10,6 +10,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useAuth } from "@/components/auth-provider"
+import { AuthModal } from "@/components/auth-modal"
 import { apiService, Question } from "@/lib/api-service"
 import {
   Briefcase,
@@ -19,9 +22,12 @@ import {
   FileText,
   Settings,
   Sparkles,
-  WifiOff
+  WifiOff,
+  Lock,
+  Zap
 } from "lucide-react"
 import { useState } from "react"
+import { toast } from "sonner"
 
 interface GenerationControlsProps {
   resumeText: string
@@ -65,11 +71,13 @@ export function GenerationControls({
   generateQuestions,
   startExpanded = false
 }: GenerationControlsProps) {
+  const { isAuthenticated, canGenerateQuestions, updateAnonymousUsage, deductCredits } = useAuth()
   const [error, setError] = useState<string | null>(null)
   const [isExpanded, setIsExpanded] = useState(startExpanded)
 
   // Basic generation options
   const [questionCount, setQuestionCount] = useState(10)
+  const [showAuthModal, setShowAuthModal] = useState(false)
   const [includeAnswers, setIncludeAnswers] = useState(false)
 
   // Advanced options
@@ -94,6 +102,18 @@ export function GenerationControls({
 
   const handleGeneration = async (mode: 'resume' | 'jd' | 'combined') => {
     if (isGenerating) return
+
+    // Check if user can generate questions (credit/usage limits)
+    if (!canGenerateQuestions(questionCount)) {
+      if (isAuthenticated) {
+        setError("Insufficient credits to generate questions")
+        toast.error(`Need ${questionCount} credits to generate questions`)
+      } else {
+        setError("Free limit reached. Please sign up to continue.")
+        setShowAuthModal(true)
+      }
+      return
+    }
 
     // Immediately update UI state to provide feedback
     setError(null)
@@ -129,9 +149,23 @@ export function GenerationControls({
           if (!success) {
             throw new Error('Failed to send generation request via WebSocket')
           }
+          
+          // Deduct credits/update usage for successful generation
+          if (isAuthenticated) {
+            await deductCredits('generate_questions', questionCount)
+          } else {
+            updateAnonymousUsage({ questions_generated: questionCount })
+          }
         } else {
           // Fallback to HTTP API with chunked processing
           const response = await apiService.generateQuestions(request)
+
+          // Deduct credits/update usage for successful generation
+          if (isAuthenticated) {
+            await deductCredits('generate_questions', questionCount)
+          } else {
+            updateAnonymousUsage({ questions_generated: questionCount })
+          }
 
           // Use requestAnimationFrame for smooth UI updates
           requestAnimationFrame(() => {
@@ -247,6 +281,35 @@ export function GenerationControls({
 
         <CollapsibleContent>
           <CardContent className="space-y-4 pt-0">
+            {/* Credit/Usage Status */}
+            {!isAuthenticated && !canGenerateQuestions(questionCount) && (
+              <Alert className="border-orange-200 bg-orange-50">
+                <Lock className="h-4 w-4 text-orange-600" />
+                <AlertDescription className="text-orange-800">
+                  <div className="space-y-2">
+                    <p><strong>Free limit reached!</strong> You've used all 10 free questions.</p>
+                    <Button 
+                      size="sm" 
+                      onClick={() => setShowAuthModal(true)}
+                      className="w-full"
+                    >
+                      <Zap className="w-4 h-4 mr-2" />
+                      Sign up for 50 free credits
+                    </Button>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {isAuthenticated && !canGenerateQuestions(questionCount) && (
+              <Alert className="border-red-200 bg-red-50">
+                <Lock className="h-4 w-4 text-red-600" />
+                <AlertDescription className="text-red-800">
+                  <p><strong>Insufficient credits!</strong> You need {questionCount} credits to generate questions.</p>
+                </AlertDescription>
+              </Alert>
+            )}
+
             {error && (
               <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
                 <span className="text-sm text-destructive">{error}</span>
@@ -403,6 +466,12 @@ export function GenerationControls({
           </CardContent>
         </CollapsibleContent>
       </Card>
+      
+      <AuthModal 
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        initialTab="signup"
+      />
     </Collapsible>
   )
 }

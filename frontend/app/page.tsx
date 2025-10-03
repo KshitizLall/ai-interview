@@ -9,6 +9,9 @@ import { HeaderNavigation } from "@/components/header-navigation"
 import { QuestionsList } from "@/components/questions-list"
 import { SavedQuestions } from "@/components/saved-questions"
 import { useWebSocketContext } from "@/components/websocket-provider"
+import { useAuth } from "@/components/auth-provider"
+import { SessionSidebar } from "@/components/session-sidebar"
+import { CreditDisplayCompact } from "@/components/credit-display"
 
 
 import { Badge } from "@/components/ui/badge"
@@ -16,13 +19,15 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useReducedMotion } from "@/hooks/use-reduced-motion"
-import { apiService } from "@/lib/api-service"
-import { Briefcase, Clock, Download, FileText, HelpCircle, Moon, Sparkles, Sun } from "lucide-react"
+import { apiService, InterviewSession } from "@/lib/api-service"
+import { Briefcase, Clock, Download, FileText, HelpCircle, Moon, Sparkles, Sun, SidebarClose, SidebarOpen } from "lucide-react"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
 export default function HomePage() {
   const [isDark, setIsDark] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [currentSession, setCurrentSession] = useState<InterviewSession | null>(null)
 
   const prefersReducedMotion = useReducedMotion()
   const [resumeFile, setResumeFile] = useState<File | null>(null)
@@ -37,6 +42,9 @@ export default function HomePage() {
 
   // WebSocket integration
   const { isConnected, progressUpdate } = useWebSocketContext()
+  
+  // Auth integration
+  const { isAuthenticated, user, canGenerateQuestions, canGenerateAnswers, updateAnonymousUsage } = useAuth()
 
   // Handle progress completion
   useEffect(() => {
@@ -152,53 +160,195 @@ export default function HomePage() {
     }
   }
 
+  // Session management functions
+  const handleSessionSelect = async (session: InterviewSession) => {
+    setCurrentSession(session)
+    setResumeText(session.resume_text || '')
+    setJobDescription(session.job_description || '')
+    setQuestions(session.questions || [])
+    setAnswers(session.answers || {})
+    setResumeFile(null) // Clear file since we have text content
+    
+    if (session.resume_filename) {
+      // Could potentially restore file info here
+    }
+    
+    toast.success(`Loaded session: ${session.company_name || session.job_title || 'Untitled'}`)
+  }
+
+  const handleNewSession = () => {
+    setCurrentSession(null)
+    setResumeText('')
+    setJobDescription('')
+    setQuestions([])
+    setAnswers({})
+    setResumeFile(null)
+    setSavedQuestions([])
+    toast.success('Started new session')
+  }
+
+  const saveCurrentSession = async () => {
+    if (!isAuthenticated || !user) return
+
+    try {
+      const sessionData = {
+        company_name: extractCompanyName(jobDescription) || 'Interview Session',
+        job_title: extractJobTitle(jobDescription),
+        resume_filename: resumeFile?.name,
+        resume_text: resumeText,
+        job_description: jobDescription
+      }
+
+      let session: InterviewSession
+      
+      if (currentSession?.id) {
+        // Update existing session
+        const response = await apiService.updateSession(currentSession.id, {
+          ...sessionData,
+          questions,
+          answers
+        })
+        session = response.session
+      } else {
+        // Create new session
+        const response = await apiService.createSession(sessionData)
+        session = response.session
+        
+        // Add questions to the session if we have any
+        if (questions.length > 0) {
+          await apiService.updateSession(session.id!, {
+            questions,
+            answers
+          })
+        }
+      }
+      
+      setCurrentSession(session)
+      return session
+    } catch (error) {
+      console.error('Failed to save session:', error)
+      toast.error('Failed to save session')
+      return null
+    }
+  }
+
+  // Auto-save functionality for authenticated users
+  useEffect(() => {
+    if (!isAuthenticated || !currentSession?.id) return
+
+    const saveTimeout = setTimeout(async () => {
+      if (questions.length > 0 || Object.keys(answers).length > 0) {
+        try {
+          await apiService.updateSessionAnswers(currentSession.id!, answers)
+        } catch (error) {
+          console.error('Auto-save failed:', error)
+        }
+      }
+    }, 2000) // Auto-save after 2 seconds of inactivity
+
+    return () => clearTimeout(saveTimeout)
+  }, [answers, isAuthenticated, currentSession?.id])
+
+  // Helper functions
+  const extractCompanyName = (jobDesc: string): string | undefined => {
+    if (!jobDesc) return undefined
+    const lines = jobDesc.trim().split('\n')
+    const firstLine = lines[0]?.trim()
+    
+    if (firstLine && firstLine.toLowerCase().includes('at ')) {
+      return firstLine.split('at ').pop()?.trim()
+    }
+    
+    return undefined
+  }
+
+  const extractJobTitle = (jobDesc: string): string | undefined => {
+    if (!jobDesc) return undefined
+    const lines = jobDesc.trim().split('\n')
+    return lines[0]?.trim()
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Header Navigation */}
       <HeaderNavigation />
 
-      <div className="flex-1">
-        {/* Simplified Top Bar */}
-        <header className="border-b border-border/30 bg-card/30 backdrop-blur-md glass-card-subtle sticky top-0 z-50">
-          <div className="container mx-auto px-4 py-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <ConnectionStatus size="sm" />
-                <span className="text-sm text-muted-foreground hidden sm:inline">AI Interview Prep</span>
-              </div>
+      <div className="flex-1 flex">
+        {/* Session Sidebar - Desktop only */}
+        <div className={`hidden lg:flex transition-all duration-300 ${sidebarOpen ? 'w-80' : 'w-0'} overflow-hidden`}>
+          <SessionSidebar 
+            currentSessionId={currentSession?.id}
+            onSessionSelect={handleSessionSelect}
+            onNewSession={handleNewSession}
+            className="h-full"
+          />
+        </div>
 
-              <div className="flex items-center gap-2">
-                {questions.length > 0 && (
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col">
+          {/* Top Bar */}
+          <header className="border-b border-border/30 bg-card/30 backdrop-blur-md glass-card-subtle sticky top-0 z-50">
+            <div className="container mx-auto px-4 py-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {/* Sidebar Toggle - Desktop */}
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setSidebarOpen(!sidebarOpen)}
+                    className="hidden lg:flex"
+                  >
+                    {sidebarOpen ? <SidebarClose className="w-4 h-4" /> : <SidebarOpen className="w-4 h-4" />}
+                  </Button>
+
+                  <ConnectionStatus size="sm" />
+                  <span className="text-sm text-muted-foreground hidden sm:inline">AI Interview Prep</span>
+                  
+                  {/* Current Session Indicator */}
+                  {currentSession && (
+                    <Badge variant="outline" className="hidden sm:inline-flex">
+                      {currentSession.company_name || currentSession.job_title || 'Active Session'}
+                    </Badge>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {/* Credit Display - Compact */}
+                  <CreditDisplayCompact />
+
+                  {questions.length > 0 && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="outline" size="sm" onClick={() => handleExportPDF()}>
+                          <Download className="w-4 h-4 mr-2" />
+                          Export PDF
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Download your questions and answers as a PDF</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button variant="outline" size="sm" onClick={() => handleExportPDF()}>
-                        <Download className="w-4 h-4 mr-2" />
-                        Export PDF
+                      <Button variant="ghost" size="sm" onClick={toggleTheme}>
+                        {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Download your questions and answers as a PDF</p>
+                      <p>Toggle {isDark ? 'light' : 'dark'} mode</p>
                     </TooltipContent>
                   </Tooltip>
-                )}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="sm" onClick={toggleTheme}>
-                      {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Toggle {isDark ? 'light' : 'dark'} mode</p>
-                  </TooltipContent>
-                </Tooltip>
+                </div>
               </div>
             </div>
-          </div>
-        </header>
+          </header>
 
-        <div className="container mx-auto px-4 py-8 mb-8">
-          {/* Main content area */}
-          {questions.length === 0 ? (
+          {/* Main Content */}
+          <div className="flex-1 overflow-auto">
+            <div className="container mx-auto px-4 py-8 mb-8">
+              {/* Main content area */}
+              {questions.length === 0 ? (
             <div className="max-w-4xl mx-auto space-y-8">
               {/* Clean Hero Section */}
               <div className="text-center space-y-6">
@@ -302,16 +452,16 @@ export default function HomePage() {
               setIsGenerating={setIsGenerating}
             />
           )}
+            </div>
+          </div>
+          
+          {/* Footer */}
+          <Footer />
         </div>
-        
-        {/* Footer */}
-        <Footer />
       </div>
     </div>
   )
 }
-
-
 
 // Generation Controls Component
 function EnhancedGenerationControls({
