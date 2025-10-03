@@ -6,6 +6,7 @@ import { WebSocketProvider } from '@/components/websocket-provider'
 import { Toaster } from 'sonner'
 import './globals.css'
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { HeaderNavigation } from '@/components/header-navigation'
 
 
 export const metadata: Metadata = {
@@ -23,6 +24,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
         <WebSocketProvider>
+          <HeaderNavigation />
           {children}
         </WebSocketProvider>
         <Toaster 

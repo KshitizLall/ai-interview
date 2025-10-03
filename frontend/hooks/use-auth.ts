@@ -23,6 +23,20 @@ export function useAuth() {
       // Move to session storage for current session
       sessionStorage.setItem(TOKEN_KEY, persistentToken)
     }
+    // Listen for token changes broadcast from other hook instances
+    const onTokenChange = (e: Event) => {
+      try {
+        const t = (e as CustomEvent<string | null>).detail
+        setToken(t)
+      } catch (err) {
+        // ignore
+      }
+    }
+    window.addEventListener('ib_token_changed', onTokenChange as EventListener)
+
+    return () => {
+      window.removeEventListener('ib_token_changed', onTokenChange as EventListener)
+    }
   }, [])
 
   const saveToken = useCallback((t: string | null, remember: boolean = false) => {
@@ -43,6 +57,12 @@ export function useAuth() {
       localStorage.removeItem(REMEMBER_KEY)
     }
     setToken(t)
+    // Broadcast token change to other hook instances in this window
+    try {
+      window.dispatchEvent(new CustomEvent('ib_token_changed', { detail: t }))
+    } catch (err) {
+      // ignore in non-browser environments
+    }
   }, [])
 
   const signup = useCallback(async (email: string, password: string, name?: string) => {

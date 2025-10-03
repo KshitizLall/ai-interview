@@ -3,7 +3,6 @@
 import React, { useState, useMemo } from "react"
 import { useAuth } from "@/hooks/use-auth"
 import { useSessions, Session, SessionItem } from "@/lib/session-store"
-import { HeaderNavigation } from "@/components/header-navigation"
 import { FileUploadZone } from "@/components/file-upload-zone"
 import { QuestionsList } from "@/components/questions-list"
 import { Button } from "@/components/ui/button"
@@ -70,8 +69,6 @@ export function AuthenticatedArea() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <HeaderNavigation />
-
       <div className="flex-1 container mx-auto px-4 py-6">
         <div className="flex gap-6">
           {/* Left sidebar */}

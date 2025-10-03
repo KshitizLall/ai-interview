@@ -5,7 +5,6 @@ import { ConnectionStatus } from "@/components/connection-status"
 import { FileUploadZone } from "@/components/file-upload-zone"
 import { Footer } from "@/components/footer"
 import { GenerationControls } from "@/components/generation-controls"
-import { HeaderNavigation } from "@/components/header-navigation"
 import { QuestionsList } from "@/components/questions-list"
 import { SavedQuestions } from "@/components/saved-questions"
 import { useWebSocketContext } from "@/components/websocket-provider"
@@ -159,9 +158,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      {/* Header Navigation */}
-      <HeaderNavigation />
-
       <div className="flex-1">
 
 
