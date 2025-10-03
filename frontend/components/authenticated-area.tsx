@@ -13,20 +13,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
+import { apiService } from "@/lib/api-service"
 
 export function AuthenticatedArea() {
   const { token, logout } = useAuth()
   const { sessions, selected, createSession, updateSession, deleteSession, selectSession } = useSessions()
+  const [questionFilter, setQuestionFilter] = useState<'all' | 'technical' | 'behavioral' | 'experience'>('all')
 
   // Upload & setup form state
   const [uploadType, setUploadType] = useState<'jd' | 'resume'>('jd')
   const [file, setFile] = useState<File | null>(null)
   const [text, setText] = useState("")
+  const [companyName, setCompanyName] = useState("")
   const [roleFocus, setRoleFocus] = useState("")
   const [seniority, setSeniority] = useState('Mid')
   const [questionTypes, setQuestionTypes] = useState<string[]>(['Technical'])
   const [answerTone, setAnswerTone] = useState('Concise')
   const [questionCount, setQuestionCount] = useState(5)
+  const [companyFilter, setCompanyFilter] = useState<string | 'all'>('all')
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [difficultyFilter, setDifficultyFilter] = useState<string | 'all'>('all')
 
   // No separate tabs for JD/Resume: show all sessions in one list
 
@@ -45,20 +51,51 @@ export function AuthenticatedArea() {
       return
     }
 
-    const newSession = createSession({
-      type: uploadType,
-      title: uploadType === 'jd' ? `JD - ${roleFocus}` : `Resume - ${roleFocus}`,
-      options: {
-        roleFocus,
-        seniority,
-        questionTypes,
-        answerTone,
-        questionCount,
-      },
-      items: [],
-    })
+    // Start generation and create session with generated questions
+    setIsGenerating(true)
 
-    toast.success('Session created', { description: 'Your interview prep session was created' })
+    const request = {
+      resume_text: uploadType === 'jd' ? undefined : text,
+      job_description: uploadType === 'resume' ? undefined : text,
+      mode: uploadType,
+      question_count: questionCount,
+      include_answers: false,
+      question_types: questionTypes.length ? questionTypes : undefined,
+      difficulty_levels: undefined,
+      company_name: companyName || undefined,
+      position_level: seniority || undefined,
+    }
+
+    apiService.generateQuestions(request).then((response) => {
+      const items = (response.questions || []).map((q: any) => ({
+        id: q.id,
+        category: q.type || q.category || 'technical',
+        question: q.question || q.text || q.prompt || '',
+        answer: q.answer || '',
+        difficulty: q.difficulty || 'Medium',
+        createdAt: q.created_at || new Date().toISOString(),
+      }))
+
+      const newSession = createSession({
+        type: uploadType,
+        title: uploadType === 'jd' ? `JD - ${roleFocus}` : `Resume - ${roleFocus}`,
+        options: {
+          roleFocus,
+          seniority,
+          questionTypes,
+          answerTone,
+          questionCount,
+          companyName: companyName || undefined,
+        },
+        items,
+      })
+
+      if (newSession && (newSession as any).id) selectSession((newSession as any).id)
+      toast.success('Session created')
+    }).catch((err) => {
+      console.error('Generation failed', err)
+      toast.error('Question generation failed. Please try again.')
+    }).finally(() => setIsGenerating(false))
   }
 
   // When generation runs inside InputsPane, create a session with the generated questions
@@ -113,9 +150,9 @@ export function AuthenticatedArea() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <div className="flex-1 container mx-auto px-4 py-6">
-        <div className="flex gap-6">
+        <div className="flex flex-col lg:flex-row gap-6">
           {/* Left sidebar */}
-          <aside className="w-80 flex-shrink-0">
+          <aside className="w-full lg:w-80 flex-shrink-0 lg:sticky lg:top-6">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold">Your Sessions</h3>
               <div className="text-xs text-muted-foreground">{sessions.length}</div>
@@ -127,10 +164,23 @@ export function AuthenticatedArea() {
             </div>
 
             <div className="mb-3">
-              <Input placeholder="Search sessions..." onChange={(e) => {/* TODO: wire search filter if available */}} />
+              <Input className="w-full" placeholder="Search sessions..." onChange={(e) => {/* TODO: wire search filter if available */}} />
             </div>
 
-            <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+            <div className="mb-3">
+              <div className="text-sm font-medium mb-2">Filter by company</div>
+              <Select onValueChange={(v) => setCompanyFilter(v as string | 'all')}>
+                <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All companies</SelectItem>
+                  {Array.from(new Set(sessions.map(s => s.options?.companyName).filter(Boolean))).map((c: any) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2 max-h-[40vh] md:max-h-[55vh] lg:max-h-[60vh] overflow-y-auto">
               {sessions.length === 0 && (
                 <div className="p-4 bg-card border rounded-md text-sm text-muted-foreground">
                   No sessions yet. Create a new session to get started.
@@ -140,14 +190,19 @@ export function AuthenticatedArea() {
                 </div>
               )}
 
-              {sessions.map((s) => (
+              {sessions
+                .filter(s => companyFilter === 'all' || !companyFilter || s.options?.companyName === companyFilter)
+                .map((s) => (
                 <div key={s.id} className={`p-3 border rounded-md cursor-pointer ${selected?.id === s.id ? 'ring-1 ring-primary' : ''}`} onClick={() => selectSession(s.id)}>
-                  <div className="flex items-center justify-between">
-                    <div>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="min-w-0">
                       <div className="font-medium truncate">{s.title}</div>
                       <div className="text-xs text-muted-foreground">{new Date(s.createdAt).toLocaleString()}</div>
+                      {s.options?.companyName && <div className="text-xs text-muted-foreground">{s.options.companyName}</div>}
                     </div>
-                    <Badge variant={s.status === 'New' ? 'secondary' : s.status === 'In Progress' ? 'outline' : 'default'} className="text-xs">{s.status}</Badge>
+                    <div className="flex-shrink-0">
+                      <Badge variant={s.status === 'New' ? 'secondary' : s.status === 'In Progress' ? 'outline' : 'default'} className="text-xs">{s.status}</Badge>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -157,86 +212,49 @@ export function AuthenticatedArea() {
           {/* Main content */}
           <main className="flex-1">
             {!selected ? (
-              <div id="uploader" className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card>
+              <div id="uploader" className="grid grid-cols-1">
+                <Card className="min-h-[320px] lg:min-h-[420px]">
                   <CardHeader>
                     <CardTitle>Upload Job Description / Resume</CardTitle>
                   </CardHeader>
                   <CardContent>
                     {/* Use shared InputsPane so logic for upload and generation is consistent with public page */}
-                    <InputsPane
-                      resumeFile={file}
-                      setResumeFile={setFile}
-                      resumeText={text}
-                      setResumeText={setText}
-                      jobDescription={text}
-                      setJobDescription={setText}
-                      isGenerating={false}
-                      setIsGenerating={() => {}}
-                      setQuestions={handleGeneratedQuestions}
-                      setAnswers={handleSaveAnswers}
-                    />
-
-                    <div className="mt-4 space-y-2">
-                      <Input placeholder="Role focus" value={roleFocus} onChange={(e) => setRoleFocus(e.target.value)} />
-                      <div className="flex gap-2 items-center">
-                        <Select onValueChange={(v) => setSeniority(v)}>
-                          <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Junior">Junior</SelectItem>
-                            <SelectItem value="Mid">Mid</SelectItem>
-                            <SelectItem value="Senior">Senior</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <label className="text-sm">Question types:</label>
-                        <div className="flex gap-2">
-                          <label className="flex items-center gap-2"><Checkbox checked={questionTypes.includes('Technical')} onCheckedChange={() => toggleQuestionType('Technical')} />Technical</label>
-                          <label className="flex items-center gap-2"><Checkbox checked={questionTypes.includes('Behavioral')} onCheckedChange={() => toggleQuestionType('Behavioral')} />Behavioral</label>
-                          <label className="flex items-center gap-2"><Checkbox checked={questionTypes.includes('Experience')} onCheckedChange={() => toggleQuestionType('Experience')} />Experience</label>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <label className="text-sm">Answer tone:</label>
-                        <Select onValueChange={(v) => setAnswerTone(v)}>
-                          <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Concise">Concise</SelectItem>
-                            <SelectItem value="Detailed">Detailed</SelectItem>
-                            <SelectItem value="STAR">STAR</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <label className="text-sm">Number of questions:</label>
-                        <Input type="number" value={String(questionCount)} onChange={(e) => setQuestionCount(Number(e.target.value))} className="w-24" />
-                      </div>
-
-                      <div className="mt-4">
-                        <Button onClick={() => { setUploadType('jd'); handleStart(); }}>
-                          Start Interview Prep
-                        </Button>
-                      </div>
-                    </div>
+                        <InputsPane
+                          resumeFile={file}
+                          setResumeFile={setFile}
+                          resumeText={text}
+                          setResumeText={setText}
+                          jobDescription={text}
+                          setJobDescription={setText}
+                          companyName={companyName}
+                          setCompanyName={setCompanyName}
+                          positionLevel={seniority}
+                          setPositionLevel={setSeniority}
+                          isGenerating={isGenerating}
+                          setIsGenerating={setIsGenerating}
+                          setQuestions={handleGeneratedQuestions}
+                          setAnswers={handleSaveAnswers}
+                        />
                   </CardContent>
                 </Card>
               </div>
             ) : (
               // Session detail view
               <div>
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 gap-3">
                   <div>
                     <h2 className="text-2xl font-semibold">{selected.title}</h2>
                     <div className="text-sm text-muted-foreground">{new Date(selected.createdAt).toLocaleString()}</div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button onClick={() => { /* Regenerate Questions - mock */ toast.success('Regenerating questions...'); setTimeout(()=>toast.success('Questions regenerated'), 800) }}>Regenerate Questions</Button>
-                    <Button onClick={() => { /* Add More - mock */ toast.success('Adding more questions...'); setTimeout(()=>toast.success('Added questions'), 800) }}>Add More Questions</Button>
-                    <Button onClick={() => toast.success('Export started (mock)')}>Export as PDF</Button>
-                    <Button onClick={() => { navigator.clipboard.writeText(JSON.stringify(selected.items.map(i=>i.answer||i.question).join('\n\n'))); toast.success('Copied all answers') }}>Copy All</Button>
-                    <Button variant="destructive" onClick={() => handleDelete(selected.id)}>Delete Session</Button>
-                    <Button onClick={() => toast.success('Saved changes')}>Save Changes</Button>
+                  <div className="flex gap-2 md:gap-3 overflow-x-auto md:overflow-visible pb-1">
+                    <div className="flex gap-2 md:gap-3 whitespace-nowrap">
+                      <Button className="md:w-auto" onClick={() => { /* Regenerate Questions - mock */ toast.success('Regenerating questions...'); setTimeout(()=>toast.success('Questions regenerated'), 800) }}>Regenerate</Button>
+                      <Button className="md:w-auto" onClick={() => { /* Add More - mock */ toast.success('Adding more questions...'); setTimeout(()=>toast.success('Added questions'), 800) }}>Add More</Button>
+                      <Button className="md:w-auto" onClick={() => toast.success('Export started (mock)')}>Export PDF</Button>
+                      <Button className="md:w-auto" onClick={() => { navigator.clipboard.writeText(JSON.stringify(selected.items.map(i=>i.answer||i.question).join('\n\n'))); toast.success('Copied all answers') }}>Copy All</Button>
+                      <Button className="md:w-auto" variant="destructive" onClick={() => handleDelete(selected.id)}>Delete</Button>
+                      <Button className="md:w-auto" onClick={() => toast.success('Saved changes')}>Save</Button>
+                    </div>
                   </div>
                 </div>
 
@@ -246,29 +264,68 @@ export function AuthenticatedArea() {
                 </div>
 
                 <div className="mb-4">
-                  <div className="flex items-center gap-2">
-                    <Button onClick={() => {/* filter All */}}>All</Button>
-                    <Button onClick={() => {/* filter technical */}}>Technical</Button>
-                    <Button onClick={() => {/* filter behavioral */}}>Behavioral</Button>
-                    <Button onClick={() => {/* filter experience */}}>Experience</Button>
-                    <Input placeholder="Search questions..." onChange={(e) => {/* wire search */}} />
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button variant={questionFilter === 'all' ? 'default' : 'outline'} onClick={() => setQuestionFilter('all')}>All</Button>
+                      <Button variant={questionFilter === 'technical' ? 'default' : 'outline'} onClick={() => setQuestionFilter('technical')}>Technical</Button>
+                      <Button variant={questionFilter === 'behavioral' ? 'default' : 'outline'} onClick={() => setQuestionFilter('behavioral')}>Behavioral</Button>
+                      <Button variant={questionFilter === 'experience' ? 'default' : 'outline'} onClick={() => setQuestionFilter('experience')}>Experience</Button>
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <Input className="w-full" placeholder="Search questions..." onChange={(e) => {/* wire search */}} />
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <select value={difficultyFilter} onChange={(e) => setDifficultyFilter(e.target.value as any)} className="h-8 px-2 border rounded-md bg-input text-sm">
+                        <option value="all">All difficulties</option>
+                        <option value="beginner">Beginner</option>
+                        <option value="intermediate">Intermediate</option>
+                        <option value="advanced">Advanced</option>
+                        <option value="expert">Expert</option>
+                      </select>
+
+                      <select value={"all"} /* placeholder for future status filter */ onChange={() => {}} className="h-8 px-2 border rounded-md bg-input text-sm">
+                        <option value="all">All</option>
+                      </select>
+
+                      <select value={"newest"} onChange={() => {}} className="h-8 px-2 border rounded-md bg-input text-sm">
+                        <option value="newest">Sort: Newest</option>
+                        <option value="oldest">Sort: Oldest</option>
+                        <option value="relevance">Sort: Relevance</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
+                {
+                  (() => {
+                    // Apply all filters and sorting
+                    let filtered = selected.items.slice()
+                    if (questionFilter !== 'all') filtered = filtered.filter(it => it.category === questionFilter)
+                    if (difficultyFilter !== 'all') filtered = filtered.filter(it => (it.difficulty || '').toLowerCase().includes(difficultyFilter))
 
-                <QuestionsList
-                  questions={selected.items.map((it) => ({ id: it.id, question: it.question, type: it.category, relevance_score: 0.8, difficulty: it.difficulty, answer: it.answer, created_at: it.createdAt }))}
-                  savedQuestions={[]}
-                  setSavedQuestions={() => {}}
-                  answers={selected.items.reduce((acc, item) => ({ ...acc, [item.id]: item.answer }), {} as Record<string, string>)}
-                  // setAnswers accepts either a record or updater; normalize to record
-                  setAnswers={(a: any) => {
-                    const newAnswers = typeof a === 'function' ? a(selected.items.reduce((acc, item) => ({ ...acc, [item.id]: item.answer }), {} as Record<string, string>)) : a
-                    const updated = selected.items.map((it) => ({ ...it, answer: newAnswers[it.id] ?? it.answer }))
-                    updateSession(selected.id, { items: updated })
-                  }}
-                  resumeText=""
-                  jobDescription=""
-                />
+                    // Placeholder for answered/unanswered filter and sorting (can be extended)
+                    // Default: sort by createdAt desc
+                    filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+
+                    return (
+                      <QuestionsList
+                        questions={filtered.map((it) => ({ id: it.id, question: it.question, type: it.category, relevance_score: 0.8, difficulty: it.difficulty, answer: it.answer, created_at: it.createdAt }))}
+                        savedQuestions={[]}
+                        setSavedQuestions={() => {}}
+                        answers={selected.items.reduce((acc, item) => ({ ...acc, [item.id]: item.answer }), {} as Record<string, string>)}
+                        // setAnswers accepts either a record or updater; normalize to record
+                        setAnswers={(a: any) => {
+                          const newAnswers = typeof a === 'function' ? a(selected.items.reduce((acc, item) => ({ ...acc, [item.id]: item.answer }), {} as Record<string, string>)) : a
+                          const updated = selected.items.map((it) => ({ ...it, answer: newAnswers[it.id] ?? it.answer }))
+                          updateSession(selected.id, { items: updated })
+                        }}
+                        resumeText=""
+                        jobDescription=""
+                      />
+                    )
+                  })()
+                }
               </div>
             )}
           </main>

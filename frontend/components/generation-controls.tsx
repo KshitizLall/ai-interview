@@ -26,6 +26,8 @@ import { useState } from "react"
 interface GenerationControlsProps {
   resumeText: string
   jobDescription: string
+  companyName?: string
+  positionLevel?: string
   isGenerating: boolean
   setIsGenerating: (generating: boolean) => void
   setQuestions: (questions: Question[]) => void
@@ -56,6 +58,8 @@ const DIFFICULTY_LEVELS = [
 export function GenerationControls({
   resumeText,
   jobDescription,
+  companyName,
+  positionLevel,
   isGenerating,
   setIsGenerating,
   setQuestions,
@@ -110,6 +114,9 @@ export function GenerationControls({
           include_answers: includeAnswers,
           question_types: selectedQuestionTypes.length > 0 ? selectedQuestionTypes : undefined,
           difficulty_levels: selectedDifficulties.length > 0 ? selectedDifficulties : undefined
+          ,
+          company_name: (companyName && companyName.trim()) ? companyName.trim() : undefined,
+          position_level: positionLevel || undefined,
         }
 
         if (isConnected && generateQuestions) {
@@ -121,8 +128,10 @@ export function GenerationControls({
               mode,
               count: questionCount,
               include_answers: includeAnswers,
-              question_types: request.question_types,
-              difficulty_levels: request.difficulty_levels
+                question_types: request.question_types,
+                difficulty_levels: request.difficulty_levels,
+                company_name: (companyName && companyName.trim()) ? companyName.trim() : undefined,
+                position_level: positionLevel || undefined,
             }
           })
 

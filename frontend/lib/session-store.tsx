@@ -26,6 +26,7 @@ export type Session = {
     questionTypes: string[]
     answerTone: string
     questionCount: number
+    companyName?: string
   }
   items: SessionItem[]
 }
@@ -68,6 +69,7 @@ export function useSessions() {
         questionTypes: data.options?.questionTypes || ["Technical"],
         answerTone: data.options?.answerTone || "Concise",
         questionCount: data.options?.questionCount || 5,
+        companyName: data.options?.companyName || undefined,
       },
       items: data.items || [],
     }

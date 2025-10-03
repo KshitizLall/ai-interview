@@ -123,3 +123,37 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Responsive base tweaks */
+html {
+  /* Mobile-first sensible base font size; Tailwind utilities will still apply */
+  font-size: 16px;
+}
+
+@media (max-width: 640px) {
+  html { font-size: 15px; }
+}
+
+@media (max-width: 420px) {
+  html { font-size: 14px; }
+}
+
+/* Ensure images and media scale on small screens */
+img, video, iframe {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Improve container padding on very small screens when using Tailwind container */
+.container {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+/* Reduce overly-aggressive global border application for small interactive elements */
+@media (max-width: 640px) {
+  *:not(button):not(input):not(textarea):not(select) {
+    outline: none !important;
+  }
+}
