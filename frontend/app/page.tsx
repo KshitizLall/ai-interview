@@ -665,16 +665,30 @@ function OutputsPane({
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-6">
-      {/* Simple Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Your Questions</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            {answeredCount} of {questions?.length || 0} answered • {Math.round((answeredCount / (questions?.length || 1)) * 100)}% complete
-          </p>
+      {/* Header Section */}
+      <div className="space-y-6">
+        {/* Title and Stats */}
+        <div className="text-center space-y-3">
+          <h1 className="text-3xl font-bold text-foreground">Your Questions</h1>
+          <div className="flex items-center justify-center gap-6 text-sm">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 dark:bg-green-900/30 rounded-full">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span className="text-green-700 dark:text-green-300 font-medium">{answeredCount} answered</span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-gray-800/50 rounded-full">
+              <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+              <span className="text-gray-600 dark:text-gray-300 font-medium">{(questions?.length || 0) - answeredCount} remaining</span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-full">
+              <span className="text-primary font-semibold">
+                {Math.round((answeredCount / (questions?.length || 1)) * 100)}% complete
+              </span>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          {/* Bulk Answer Generator */}
+
+        {/* Action Buttons */}
+        <div className="w-full">
           {activeTab === "questions" && questions?.length > 0 && (
             <BulkAnswerGenerator
               questions={questions}
@@ -682,41 +696,9 @@ function OutputsPane({
               jobDescription={jobDescription}
               answers={answers}
               setAnswers={setAnswers}
+              className="w-full max-w-4xl mx-auto"
             />
           )}
-          
-          {/* Save Session Button - only show for authenticated users */}
-          {isAuthenticated && questions.length > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={async () => {
-                const session = await saveCurrentSession()
-                if (session) {
-                  toast.success('Session saved successfully!')
-                }
-              }}
-              className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              {currentSession ? 'Update Session' : 'Save Session'}
-            </Button>
-          )}
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setQuestions([])
-              setAnswers({})
-              setSavedQuestions([])
-              setCurrentSession(null)
-              toast.success('New session started!')
-            }}
-          >
-            <Sparkles className="w-4 h-4 mr-2" />
-            New Session
-          </Button>
         </div>
       </div>
 

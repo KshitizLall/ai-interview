@@ -305,26 +305,27 @@ export function SessionSidebar({
       </div>
 
       {/* Sessions section */}
-      <div className="flex-1 flex flex-col p-4 space-y-4">
-        {/* New session button */}
-        <Button onClick={onNewSession} className="w-full">
-          <Plus className="w-4 h-4 mr-2" />
-          New Session
-        </Button>
+      <div className="flex-1 flex flex-col">
+        {/* Action bar */}
+        <div className="p-3 space-y-3 border-b border-border/50">
+          <Button onClick={onNewSession} className="w-full h-9 font-medium shadow-sm">
+            <Plus className="w-4 h-4 mr-2" />
+            New Session
+          </Button>
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search sessions..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search sessions..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 h-9 bg-background/50 border-border/50 focus:bg-background"
+            />
+          </div>
         </div>
 
         {/* Sessions list */}
-        <div className="flex-1 space-y-2 overflow-y-auto">
+        <div className="flex-1 px-3 pt-1 pb-3 space-y-0.5 overflow-y-auto">
           {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">
               Loading sessions...
@@ -342,23 +343,24 @@ export function SessionSidebar({
               const isActive = session.id === currentSessionId
 
               return (
-                <Card
+                <div
                   key={session.id}
-                  className={`p-3 cursor-pointer transition-colors hover:bg-accent/50 group ${
-                    isActive ? 'ring-2 ring-primary bg-primary/5' : ''
+                  className={`relative cursor-pointer transition-all duration-200 group rounded-lg border ${
+                    isActive 
+                      ? 'bg-primary/5 border-primary/40 shadow-sm' 
+                      : 'bg-background border-border/40 hover:bg-accent/30 hover:border-border/60 hover:shadow-sm'
                   }`}
                   onClick={() => onSessionSelect(session)}
                 >
-                  <div className="space-y-2">
-                    {/* Session title */}
-                    <div className="flex items-start justify-between">
+                  <div className="px-2.5 py-2">
+                    <div className="flex items-center justify-between">
                       <div className="flex-1 min-w-0">
                         {editingSession === session.id ? (
-                          <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+                          <div className="space-y-1.5" onClick={(e) => e.stopPropagation()}>
                             <Input
                               value={editName}
                               onChange={(e) => setEditName(e.target.value)}
-                              className="text-sm h-8"
+                              className="text-xs h-6 border focus:ring-1 focus:ring-primary/20"
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
                                   handleEditSession(session.id!, editName)
@@ -371,7 +373,7 @@ export function SessionSidebar({
                             <div className="flex gap-1">
                               <Button
                                 size="sm"
-                                className="h-6 px-2 text-xs"
+                                className="h-5 px-2 text-xs"
                                 onClick={() => handleEditSession(session.id!, editName)}
                               >
                                 Save
@@ -379,7 +381,7 @@ export function SessionSidebar({
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-6 px-2 text-xs"
+                                className="h-5 px-2 text-xs"
                                 onClick={cancelEditing}
                               >
                                 Cancel
@@ -388,32 +390,50 @@ export function SessionSidebar({
                           </div>
                         ) : (
                           <div>
-                            <h4 className="font-medium text-sm truncate">
+                            <h4 className="font-medium text-xs text-foreground truncate leading-tight">
                               {session.company_name || session.job_title || 'Untitled Session'}
                             </h4>
-                            {session.company_name && session.job_title && (
-                              <p className="text-xs text-muted-foreground truncate">
-                                {session.job_title}
-                              </p>
-                            )}
+                            <div className="flex items-center gap-2 mt-1">
+                              <div className="flex items-center gap-1 text-muted-foreground">
+                                <FileText className="w-3 h-3" />
+                                <span className="text-xs">{stats.totalQuestions}</span>
+                              </div>
+                              {stats.totalQuestions > 0 && (
+                                <Badge 
+                                  variant="secondary" 
+                                  className={`text-xs px-1.5 py-0 h-4 font-medium ${
+                                    stats.completionPercentage === 100 
+                                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30'
+                                      : stats.completionPercentage >= 50
+                                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30'
+                                      : 'bg-gray-100 text-gray-600 dark:bg-gray-800'
+                                  }`}
+                                >
+                                  {stats.completionPercentage}%
+                                </Badge>
+                              )}
+                              <span className="text-xs text-muted-foreground/60 ml-auto">
+                                {formatDistanceToNow(new Date(session.updated_at), { addSuffix: true }).replace('about ', '').replace(' ago', '')}
+                              </span>
+                            </div>
                           </div>
                         )}
                       </div>
                       
                       {editingSession !== session.id && (
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={(e) => startEditing(session, e)}
-                                className="h-6 w-6 p-0"
+                                className="h-6 w-6 p-0 hover:bg-blue-50 hover:text-blue-600"
                               >
-                                <Settings className="w-3 h-3 text-muted-foreground hover:text-blue-500" />
+                                <Settings className="w-3 h-3" />
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Edit name</TooltipContent>
+                            <TooltipContent>Edit</TooltipContent>
                           </Tooltip>
                           
                           <Tooltip>
@@ -422,42 +442,18 @@ export function SessionSidebar({
                                 variant="ghost"
                                 size="sm"
                                 onClick={(e) => handleDeleteSession(session.id!, e)}
-                                className="h-6 w-6 p-0"
+                                className="h-6 w-6 p-0 hover:bg-red-50 hover:text-red-600"
                               >
-                                <Trash2 className="w-3 h-3 text-muted-foreground hover:text-red-500" />
+                                <Trash2 className="w-3 h-3" />
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Delete session</TooltipContent>
+                            <TooltipContent>Delete</TooltipContent>
                           </Tooltip>
                         </div>
                       )}
                     </div>
-
-                    {/* Session metadata */}
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <FileText className="w-3 h-3" />
-                        <span>{stats.totalQuestions} questions</span>
-                      </div>
-                      {stats.totalQuestions > 0 && (
-                        <>
-                          <span>•</span>
-                          <Badge variant="secondary" className="text-xs px-1.5 py-0">
-                            {stats.completionPercentage}% complete
-                          </Badge>
-                        </>
-                      )}
-                    </div>
-
-                    {/* Timestamps */}
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Calendar className="w-3 h-3" />
-                      <span>
-                        {formatDistanceToNow(new Date(session.updated_at), { addSuffix: true })}
-                      </span>
-                    </div>
                   </div>
-                </Card>
+                </div>
               )
             })
           )}

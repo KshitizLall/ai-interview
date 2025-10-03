@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+// Card components removed - using div for full width layout
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -143,23 +143,21 @@ export function BulkAnswerGenerator({
 
   if (questions.length === 0) {
     return (
-      <Card className={className}>
-        <CardContent className="p-6 text-center text-muted-foreground">
-          <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">Generate questions first to use bulk answer generation</p>
-        </CardContent>
-      </Card>
+      <div className={`${className} text-center text-muted-foreground py-8`}>
+        <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
+        <p className="text-sm">Generate questions first to use bulk answer generation</p>
+      </div>
     )
   }
 
   return (
-    <Card className={className}>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base md:text-lg flex items-center gap-2">
+    <div className={className}>
+      <div className="pb-3">
+        <h3 className="text-base md:text-lg font-semibold flex items-center gap-2">
           <Sparkles className="w-4 h-4 md:w-5 md:h-5" />
           Bulk Answer Generation
-        </CardTitle>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
+        </h3>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground mt-2">
           <span className="flex items-center gap-1">
             <CheckCircle className="w-4 h-4 text-green-500" />
             {answeredCount} answered
@@ -169,9 +167,9 @@ export function BulkAnswerGenerator({
             {unansweredQuestions.length} remaining
           </span>
         </div>
-      </CardHeader>
+      </div>
 
-      <CardContent className="space-y-4">
+      <div className="space-y-4">
         {/* Credit/Usage Status */}
         {!isAuthenticated && !canGenerateAnswers(unansweredQuestions.length) && unansweredQuestions.length > 0 && (
           <Alert className="border-orange-200 bg-orange-50">
@@ -252,11 +250,12 @@ export function BulkAnswerGenerator({
             </Select>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-2">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 w-full">
             <Button
               onClick={() => handleBulkGeneration('unanswered')}
               disabled={isGenerating || unansweredQuestions.length === 0}
-              className="flex-1 text-sm"
+              size="lg"
+              className="w-full text-sm bg-primary hover:bg-primary/90 text-white shadow-sm"
             >
               {isGenerating ? (
                 <>
@@ -277,7 +276,8 @@ export function BulkAnswerGenerator({
               onClick={() => handleBulkGeneration('all')}
               disabled={isGenerating || questions.length === 0}
               variant="outline"
-              className="flex-1 text-sm"
+              size="lg"
+              className="w-full text-sm border-primary/20 text-primary hover:bg-primary/5"
             >
               {isGenerating ? (
                 <>
@@ -300,13 +300,13 @@ export function BulkAnswerGenerator({
             <p>• <strong>Regenerate All:</strong> Replace all existing answers with new ones</p>
           </div>
         </div>
-      </CardContent>
+      </div>
       
       <AuthModal 
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         initialTab="signup"
       />
-    </Card>
+    </div>
   )
 }
