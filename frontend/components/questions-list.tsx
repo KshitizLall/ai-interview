@@ -12,6 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Bookmark, BookmarkCheck, Edit, Copy, Trash2, ChevronDown, ChevronRight, MessageSquare, Save, Clock, Sparkles, AlertCircle, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { apiService } from "@/lib/api-service"
+import { useAuth } from "@/components/auth-provider"
+import { AuthModal } from "@/components/auth-modal"
+import { toast } from "sonner"
 
 interface Question {
   id: string
@@ -35,6 +38,7 @@ interface QuestionsListProps {
 }
 
 export function QuestionsList({ questions, savedQuestions, setSavedQuestions, answers, setAnswers, resumeText, jobDescription, setActiveTab }: QuestionsListProps) {
+  const { isAuthenticated, canGenerateAnswers, updateAnonymousUsage, deductCredits } = useAuth()
   const [hoveredQuestion, setHoveredQuestion] = useState<string | null>(null)
   const [expandedQuestions, setExpandedQuestions] = useState<Set<string>>(new Set())
   const [answerInputs, setAnswerInputs] = useState<Record<string, string>>({})
@@ -43,6 +47,7 @@ export function QuestionsList({ questions, savedQuestions, setSavedQuestions, an
   const [aiGeneratingStatus, setAiGeneratingStatus] = useState<Record<string, boolean>>({})
   const [aiAnswerStyle, setAiAnswerStyle] = useState<"professional" | "conversational" | "detailed" | "concise">("professional")
   const [showAiOptions, setShowAiOptions] = useState<Record<string, boolean>>({})
+  const [showAuthModal, setShowAuthModal] = useState(false)
 
   const toggleSave = (question: Question) => {
     // Use requestAnimationFrame for smooth UI updates
@@ -132,6 +137,22 @@ export function QuestionsList({ questions, savedQuestions, setSavedQuestions, an
   const handleGenerateAIAnswer = async (question: Question, style?: typeof aiAnswerStyle) => {
     const questionId = question.id
     
+    // Check if user can generate answers (credit/usage limits)
+    if (!canGenerateAnswers(1)) {
+      if (isAuthenticated) {
+        toast.error("Insufficient credits to generate answer")
+        return
+      } else {
+        toast.error("Free limit reached. Please sign up to continue.", {
+          action: {
+            label: "Sign Up",
+            onClick: () => setShowAuthModal(true)
+          }
+        })
+        return
+      }
+    }
+    
     // Immediate UI feedback
     requestAnimationFrame(() => {
       setAiGeneratingStatus(prev => ({ ...prev, [questionId]: true }))
@@ -145,6 +166,13 @@ export function QuestionsList({ questions, savedQuestions, setSavedQuestions, an
           resume_text: resumeText,
           job_description: jobDescription,
         })
+
+        // Deduct credits/update usage for successful generation
+        if (isAuthenticated) {
+          await deductCredits('generate_answers', 1)
+        } else {
+          updateAnonymousUsage({ answers_generated: 1 })
+        }
 
         // Use requestAnimationFrame for smooth UI updates
         requestAnimationFrame(() => {
@@ -165,9 +193,11 @@ export function QuestionsList({ questions, savedQuestions, setSavedQuestions, an
           })
         }, 2000)
 
+        toast.success("AI answer generated successfully!")
+
       } catch (error) {
         console.error("AI generation error:", error)
-        // You could show a toast notification here
+        toast.error("Failed to generate AI answer. Please try again.")
       } finally {
         requestAnimationFrame(() => {
           setAiGeneratingStatus(prev => ({ ...prev, [questionId]: false }))
@@ -306,10 +336,18 @@ export function QuestionsList({ questions, savedQuestions, setSavedQuestions, an
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation()
+                              if (!canGenerateAnswers(1)) {
+                                if (!isAuthenticated) {
+                                  setShowAuthModal(true)
+                                } else {
+                                  toast.error("Insufficient credits to generate answer")
+                                }
+                                return
+                              }
                               toggleAiOptions(question.id)
                             }}
                             disabled={aiGeneratingStatus[question.id]}
-                            className="h-7 px-2 text-xs"
+                            className={`h-7 px-2 text-xs ${!canGenerateAnswers(1) ? 'opacity-50' : ''}`}
                           >
                             {aiGeneratingStatus[question.id] ? (
                               <>
@@ -363,7 +401,7 @@ export function QuestionsList({ questions, savedQuestions, setSavedQuestions, an
                                 e.stopPropagation()
                                 handleGenerateAIAnswer(question, aiAnswerStyle)
                               }}
-                              disabled={aiGeneratingStatus[question.id]}
+                              disabled={aiGeneratingStatus[question.id] || !canGenerateAnswers(1)}
                               className="h-7 text-xs flex-1"
                             >
                               {aiGeneratingStatus[question.id] ? (
@@ -394,7 +432,19 @@ export function QuestionsList({ questions, savedQuestions, setSavedQuestions, an
                             </Button>
                           </div>
 
-                          {(!resumeText && !jobDescription) && (
+                          {!canGenerateAnswers(1) && (
+                            <Alert className="border-orange-200 bg-orange-50">
+                              <AlertCircle className="w-4 h-4 text-orange-600" />
+                              <AlertDescription className="text-xs text-orange-800">
+                                {isAuthenticated 
+                                  ? "Insufficient credits to generate AI answer." 
+                                  : "Free limit reached! Sign up to get 50 credits and continue generating answers."
+                                }
+                              </AlertDescription>
+                            </Alert>
+                          )}
+                          
+                          {(!resumeText && !jobDescription) && canGenerateAnswers(1) && (
                             <Alert>
                               <AlertCircle className="w-4 h-4" />
                               <AlertDescription className="text-xs">
@@ -485,6 +535,12 @@ Tips:
           </Collapsible>
         )
       })}
+      
+      <AuthModal 
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        initialTab="signup"
+      />
     </div>
   )
 }
