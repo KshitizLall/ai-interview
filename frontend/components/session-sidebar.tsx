@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { apiService, InterviewSession } from '@/lib/api-service'
+import { sessionManager } from '@/lib/session-manager'
 import { 
   Plus, 
   Search, 
@@ -34,6 +35,7 @@ interface SessionSidebarProps {
   currentSessionId?: string
   onSessionSelect: (session: InterviewSession) => void
   onNewSession: () => void
+  onSessionUpdate?: () => void  // Callback to refresh sessions
   className?: string
 }
 
@@ -41,6 +43,7 @@ export function SessionSidebar({
   currentSessionId, 
   onSessionSelect, 
   onNewSession,
+  onSessionUpdate,
   className 
 }: SessionSidebarProps) {
   const { user, isAuthenticated, logout } = useAuth()
@@ -49,21 +52,27 @@ export function SessionSidebar({
   const [isLoading, setIsLoading] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const [editingSession, setEditingSession] = useState<string | null>(null)
+  const [editName, setEditName] = useState('')
 
   // Load sessions when user is authenticated
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && user) {
+      sessionManager.setUser(user)
       loadSessions()
+    } else {
+      sessionManager.clearCache()
+      setSessions([])
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, user])
 
   const loadSessions = async () => {
     if (!isAuthenticated) return
 
     try {
       setIsLoading(true)
-      const response = await apiService.getSessions(true)
-      setSessions(response.sessions)
+      const sessions = await sessionManager.loadSessions()
+      setSessions(sessions)
     } catch (error) {
       console.error('Failed to load sessions:', error)
       toast.error('Failed to load saved sessions')
@@ -75,14 +84,96 @@ export function SessionSidebar({
   const handleDeleteSession = async (sessionId: string, e: React.MouseEvent) => {
     e.stopPropagation()
     
-    try {
-      await apiService.deleteSession(sessionId)
-      setSessions(prev => prev.filter(s => s.id !== sessionId))
-      toast.success('Session deleted')
-    } catch (error) {
-      toast.error('Failed to delete session')
+    if (!confirm('Are you sure you want to delete this session? This action cannot be undone.')) {
+      return
+    }
+    
+    const success = await sessionManager.deleteSession(sessionId)
+    if (success && onSessionUpdate) {
+      onSessionUpdate()
     }
   }
+
+  const handleEditSession = async (sessionId: string, newName: string) => {
+    const updatedSession = await sessionManager.updateSession(sessionId, {
+      company_name: newName
+    })
+    
+    if (updatedSession) {
+      setEditingSession(null)
+      setEditName('')
+      toast.success('Session name updated')
+      
+      if (onSessionUpdate) {
+        onSessionUpdate()
+      }
+    }
+  }
+
+  const startEditing = (session: InterviewSession, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setEditingSession(session.id!)
+    setEditName(session.company_name || session.job_title || 'Untitled Session')
+  }
+
+  const cancelEditing = () => {
+    setEditingSession(null)
+    setEditName('')
+  }
+
+  // Listen for session updates via custom events instead of polling
+  useEffect(() => {
+    if (!isAuthenticated) return
+
+    const handleSessionCreated = (event: CustomEvent) => {
+      const newSession = event.detail
+      setSessions(prev => [newSession, ...prev])
+    }
+
+    const handleSessionUpdated = (event: CustomEvent) => {
+      const { session: updatedSession, silent } = event.detail
+      setSessions(prev => prev.map(session => 
+        session.id === updatedSession.id ? updatedSession : session
+      ))
+      
+      // Only show toast for non-silent updates (not auto-save)
+      if (!silent) {
+        // Toast already handled by session manager
+      }
+    }
+
+    const handleSessionDeleted = (event: CustomEvent) => {
+      const deletedSessionId = event.detail
+      setSessions(prev => prev.filter(session => session.id !== deletedSessionId))
+    }
+
+    const handleSessionsBatchUpdated = (event: CustomEvent) => {
+      const updatedSessions = event.detail
+      setSessions(prev => {
+        const updated = [...prev]
+        updatedSessions.forEach((updatedSession: InterviewSession) => {
+          const index = updated.findIndex(s => s.id === updatedSession.id)
+          if (index !== -1) {
+            updated[index] = updatedSession
+          }
+        })
+        return updated
+      })
+    }
+
+    // Listen for custom events
+    window.addEventListener('sessionCreated', handleSessionCreated as EventListener)
+    window.addEventListener('sessionUpdated', handleSessionUpdated as EventListener)
+    window.addEventListener('sessionDeleted', handleSessionDeleted as EventListener)
+    window.addEventListener('sessionsBatchUpdated', handleSessionsBatchUpdated as EventListener)
+
+    return () => {
+      window.removeEventListener('sessionCreated', handleSessionCreated as EventListener)
+      window.removeEventListener('sessionUpdated', handleSessionUpdated as EventListener)
+      window.removeEventListener('sessionDeleted', handleSessionDeleted as EventListener)
+      window.removeEventListener('sessionsBatchUpdated', handleSessionsBatchUpdated as EventListener)
+    }
+  }, [isAuthenticated])
 
   const handleLogout = async () => {
     await logout()
@@ -253,7 +344,7 @@ export function SessionSidebar({
               return (
                 <Card
                   key={session.id}
-                  className={`p-3 cursor-pointer transition-colors hover:bg-accent/50 ${
+                  className={`p-3 cursor-pointer transition-colors hover:bg-accent/50 group ${
                     isActive ? 'ring-2 ring-primary bg-primary/5' : ''
                   }`}
                   onClick={() => onSessionSelect(session)}
@@ -262,29 +353,84 @@ export function SessionSidebar({
                     {/* Session title */}
                     <div className="flex items-start justify-between">
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-sm truncate">
-                          {session.company_name || session.job_title || 'Untitled Session'}
-                        </h4>
-                        {session.company_name && session.job_title && (
-                          <p className="text-xs text-muted-foreground truncate">
-                            {session.job_title}
-                          </p>
+                        {editingSession === session.id ? (
+                          <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+                            <Input
+                              value={editName}
+                              onChange={(e) => setEditName(e.target.value)}
+                              className="text-sm h-8"
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  handleEditSession(session.id!, editName)
+                                } else if (e.key === 'Escape') {
+                                  cancelEditing()
+                                }
+                              }}
+                              autoFocus
+                            />
+                            <div className="flex gap-1">
+                              <Button
+                                size="sm"
+                                className="h-6 px-2 text-xs"
+                                onClick={() => handleEditSession(session.id!, editName)}
+                              >
+                                Save
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-6 px-2 text-xs"
+                                onClick={cancelEditing}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <h4 className="font-medium text-sm truncate">
+                              {session.company_name || session.job_title || 'Untitled Session'}
+                            </h4>
+                            {session.company_name && session.job_title && (
+                              <p className="text-xs text-muted-foreground truncate">
+                                {session.job_title}
+                              </p>
+                            )}
+                          </div>
                         )}
                       </div>
                       
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => handleDeleteSession(session.id!, e)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <Trash2 className="w-3 h-3 text-muted-foreground hover:text-red-500" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Delete session</TooltipContent>
-                      </Tooltip>
+                      {editingSession !== session.id && (
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => startEditing(session, e)}
+                                className="h-6 w-6 p-0"
+                              >
+                                <Settings className="w-3 h-3 text-muted-foreground hover:text-blue-500" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Edit name</TooltipContent>
+                          </Tooltip>
+                          
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => handleDeleteSession(session.id!, e)}
+                                className="h-6 w-6 p-0"
+                              >
+                                <Trash2 className="w-3 h-3 text-muted-foreground hover:text-red-500" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Delete session</TooltipContent>
+                          </Tooltip>
+                        </div>
+                      )}
                     </div>
 
                     {/* Session metadata */}

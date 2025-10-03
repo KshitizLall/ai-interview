@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from app.api.router import api_router
 from app.core.config import settings
 from app.core.mongo import get_client
+from app.core.database_init import initialize_database, verify_database_connection
 
 # Load environment variables
 load_dotenv()
@@ -20,12 +21,21 @@ async def lifespan(app: FastAPI):
     # Create upload directory if it doesn't exist
     os.makedirs("uploads", exist_ok=True)
     os.makedirs("exports", exist_ok=True)
-    # Initialize MongoDB client
+    # Initialize MongoDB client and database
     try:
         _ = get_client()
         print("✅ MongoDB client initialized")
+        
+        # Initialize database collections and indexes
+        db_initialized = await initialize_database()
+        if db_initialized:
+            print("✅ Database initialization completed")
+        else:
+            print("⚠️ Database initialization failed, but continuing...")
+            
     except Exception as e:
         print(f"⚠️ MongoDB initialization failed: {e}")
+        print("⚠️ Continuing without database initialization...")
     yield
     
     # Shutdown
@@ -71,7 +81,14 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy"}
+    # Check database connection
+    db_healthy = await verify_database_connection()
+    
+    return {
+        "status": "healthy" if db_healthy else "degraded",
+        "database": "connected" if db_healthy else "disconnected",
+        "timestamp": "2025-10-04T00:00:00Z"
+    }
 
 if __name__ == "__main__":
     import uvicorn

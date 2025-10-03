@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { apiService, UserProfile, AnonymousUsageLimits } from '@/lib/api-service'
+import { sessionManager } from '@/lib/session-manager'
 import { toast } from 'sonner'
 
 interface AuthContextType {
@@ -64,9 +65,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         try {
           const profile = await apiService.getProfile()
           setUser(profile)
+          sessionManager.setUser(profile)
         } catch (error) {
           // Token might be expired, clear it
           apiService.setToken(null)
+          sessionManager.clearCache()
           console.error('Failed to load user profile:', error)
         }
       }
@@ -87,6 +90,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       await apiService.login({ email, password })
       const profile = await apiService.getProfile()
       setUser(profile)
+      sessionManager.setUser(profile)
       
       // Reset anonymous usage when user logs in
       apiService.resetAnonymousUsage()
@@ -113,6 +117,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       await apiService.signup({ name, email, password })
       const profile = await apiService.getProfile()
       setUser(profile)
+      sessionManager.setUser(profile)
 
       // Reset anonymous usage when user signs up
       apiService.resetAnonymousUsage()
@@ -140,6 +145,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.error('Logout error:', error)
     } finally {
       setUser(null)
+      sessionManager.clearCache()
       // Reset anonymous usage tracking
       const usage = apiService.getAnonymousUsage()
       setAnonymousUsage(usage)

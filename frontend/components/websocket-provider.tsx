@@ -19,6 +19,9 @@ interface WebSocketContextType {
   generateAnswer: (question: string, resumeText: string) => boolean
   clearProgress: () => void
   clearError: () => void
+  // Session events
+  notifySessionCreated: (session: any) => void
+  notifySessionUpdated: (session: any) => void
 }
 
 const WebSocketContext = createContext<WebSocketContextType | null>(null)
@@ -137,6 +140,17 @@ export function WebSocketProvider({
     generateAnswer: ws.generateAnswer,
     clearProgress,
     clearError,
+    // Session event notifiers
+    notifySessionCreated: (session: any) => {
+      // Emit custom event for session creation
+      const event = new CustomEvent('sessionCreated', { detail: session })
+      window.dispatchEvent(event)
+    },
+    notifySessionUpdated: (session: any) => {
+      // Emit custom event for session update
+      const event = new CustomEvent('sessionUpdated', { detail: { session, silent: false } })
+      window.dispatchEvent(event)
+    },
   }
 
   return (

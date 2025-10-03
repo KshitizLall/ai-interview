@@ -20,6 +20,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useReducedMotion } from "@/hooks/use-reduced-motion"
 import { apiService, InterviewSession } from "@/lib/api-service"
+import { sessionManager } from "@/lib/session-manager"
 import { Briefcase, Clock, Download, FileText, HelpCircle, Moon, Sparkles, Sun, SidebarClose, SidebarOpen } from "lucide-react"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
@@ -190,47 +191,51 @@ export default function HomePage() {
   const saveCurrentSession = async () => {
     if (!isAuthenticated || !user) return
 
-    try {
-      const sessionData = {
-        company_name: extractCompanyName(jobDescription) || 'Interview Session',
-        job_title: extractJobTitle(jobDescription),
-        resume_filename: resumeFile?.name,
-        resume_text: resumeText,
-        job_description: jobDescription
-      }
+    const sessionName = generateSessionName()
+    const sessionData = {
+      company_name: sessionName,
+      job_title: extractJobTitle(jobDescription),
+      resume_filename: resumeFile?.name,
+      resume_text: resumeText,
+      job_description: jobDescription
+    }
 
-      let session: InterviewSession
+    let session: InterviewSession | null = null
+    
+    if (currentSession?.id) {
+      // Update existing session
+      session = await sessionManager.updateSession(currentSession.id, {
+        ...sessionData,
+        questions,
+        answers
+      })
+    } else {
+      // Create new session
+      session = await sessionManager.createSession(sessionData)
       
-      if (currentSession?.id) {
-        // Update existing session
-        const response = await apiService.updateSession(currentSession.id, {
-          ...sessionData,
+      // Add questions to the session if we have any
+      if (session && questions.length > 0) {
+        const updatedSession = await sessionManager.updateSession(session.id!, {
           questions,
           answers
         })
-        session = response.session
-      } else {
-        // Create new session
-        const response = await apiService.createSession(sessionData)
-        session = response.session
-        
-        // Add questions to the session if we have any
-        if (questions.length > 0) {
-          await apiService.updateSession(session.id!, {
-            questions,
-            answers
-          })
-        }
+        session = updatedSession || session
       }
-      
-      setCurrentSession(session)
-      return session
-    } catch (error) {
-      console.error('Failed to save session:', error)
-      toast.error('Failed to save session')
-      return null
     }
+    
+    if (session) {
+      setCurrentSession(session)
+    }
+    return session
   }
+
+  // Auto-create session when questions are generated for authenticated users
+  useEffect(() => {
+    if (isAuthenticated && user && questions.length > 0 && !currentSession) {
+      // Auto-create session when questions are generated
+      handleAutoCreateSession()
+    }
+  }, [questions, isAuthenticated, user, currentSession])
 
   // Auto-save functionality for authenticated users
   useEffect(() => {
@@ -238,16 +243,39 @@ export default function HomePage() {
 
     const saveTimeout = setTimeout(async () => {
       if (questions.length > 0 || Object.keys(answers).length > 0) {
-        try {
-          await apiService.updateSessionAnswers(currentSession.id!, answers)
-        } catch (error) {
-          console.error('Auto-save failed:', error)
-        }
+        await sessionManager.updateSessionAnswers(currentSession.id!, answers)
       }
     }, 2000) // Auto-save after 2 seconds of inactivity
 
     return () => clearTimeout(saveTimeout)
   }, [answers, isAuthenticated, currentSession?.id])
+
+  const handleAutoCreateSession = async () => {
+    if (!isAuthenticated || !user || !questions.length) return
+
+    const sessionName = generateSessionName()
+    const sessionData = {
+      company_name: sessionName,
+      job_title: extractJobTitle(jobDescription),
+      resume_filename: resumeFile?.name,
+      resume_text: resumeText,
+      job_description: jobDescription
+    }
+
+    const session = await sessionManager.createSession(sessionData)
+    if (session) {
+      // Add questions to the session
+      const updatedSession = await sessionManager.updateSession(session.id!, {
+        questions,
+        answers
+      })
+
+      setCurrentSession(updatedSession || session)
+      toast.success(`✅ Session saved: ${session.company_name || 'Interview Session'}`, {
+        description: `${questions.length} questions saved automatically`
+      })
+    }
+  }
 
   // Helper functions
   const extractCompanyName = (jobDesc: string): string | undefined => {
@@ -255,8 +283,17 @@ export default function HomePage() {
     const lines = jobDesc.trim().split('\n')
     const firstLine = lines[0]?.trim()
     
-    if (firstLine && firstLine.toLowerCase().includes('at ')) {
-      return firstLine.split('at ').pop()?.trim()
+    // Try to extract company name from common patterns
+    if (firstLine && firstLine.toLowerCase().includes(' at ')) {
+      return firstLine.split(' at ').pop()?.trim()
+    }
+    
+    // Look for company patterns in first few lines
+    for (let i = 0; i < Math.min(3, lines.length); i++) {
+      const line = lines[i]?.trim().toLowerCase()
+      if (line.includes('company:') || line.includes('employer:') || line.includes('organization:')) {
+        return lines[i]?.split(':')[1]?.trim()
+      }
     }
     
     return undefined
@@ -265,7 +302,30 @@ export default function HomePage() {
   const extractJobTitle = (jobDesc: string): string | undefined => {
     if (!jobDesc) return undefined
     const lines = jobDesc.trim().split('\n')
-    return lines[0]?.trim()
+    const firstLine = lines[0]?.trim()
+    
+    // Remove company name if it exists
+    if (firstLine.toLowerCase().includes(' at ')) {
+      return firstLine.split(' at ')[0]?.trim()
+    }
+    
+    return firstLine
+  }
+
+  const generateSessionName = (): string => {
+    const companyName = extractCompanyName(jobDescription)
+    const jobTitle = extractJobTitle(jobDescription)
+    
+    if (companyName && jobTitle) {
+      return `${companyName} - ${jobTitle}`
+    } else if (companyName) {
+      return `${companyName} Interview`
+    } else if (jobTitle) {
+      return jobTitle
+    } else {
+      const timestamp = new Date().toLocaleDateString()
+      return `Interview Session - ${timestamp}`
+    }
   }
 
   return (
@@ -280,6 +340,12 @@ export default function HomePage() {
             currentSessionId={currentSession?.id}
             onSessionSelect={handleSessionSelect}
             onNewSession={handleNewSession}
+            onSessionUpdate={() => {
+              // Refresh current session data if needed
+              if (currentSession?.id) {
+                // Could refresh session data here if needed
+              }
+            }}
             className="h-full"
           />
         </div>
@@ -306,8 +372,20 @@ export default function HomePage() {
                   
                   {/* Current Session Indicator */}
                   {currentSession && (
-                    <Badge variant="outline" className="hidden sm:inline-flex">
+                    <Badge 
+                      variant="outline" 
+                      className="hidden sm:inline-flex bg-green-50 border-green-200 text-green-700"
+                    >
+                      <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
                       {currentSession.company_name || currentSession.job_title || 'Active Session'}
+                    </Badge>
+                  )}
+                  
+                  {/* Show when session will be auto-created */}
+                  {isAuthenticated && !currentSession && questions.length > 0 && (
+                    <Badge variant="outline" className="hidden sm:inline-flex bg-blue-50 border-blue-200 text-blue-700">
+                      <Clock className="w-3 h-3 mr-1" />
+                      Will save automatically
                     </Badge>
                   )}
                 </div>
@@ -450,6 +528,10 @@ export default function HomePage() {
               setJobDescription={setJobDescription}
               isGenerating={isGenerating}
               setIsGenerating={setIsGenerating}
+              isAuthenticated={isAuthenticated}
+              currentSession={currentSession}
+              setCurrentSession={setCurrentSession}
+              saveCurrentSession={saveCurrentSession}
             />
           )}
             </div>
@@ -574,6 +656,10 @@ function OutputsPane({
   setJobDescription,
   isGenerating,
   setIsGenerating,
+  isAuthenticated,
+  currentSession,
+  setCurrentSession,
+  saveCurrentSession,
 }: any) {
   const answeredCount = Object.keys(answers).filter((key) => answers[key]?.trim().length > 0).length
 
@@ -598,6 +684,25 @@ function OutputsPane({
               setAnswers={setAnswers}
             />
           )}
+          
+          {/* Save Session Button - only show for authenticated users */}
+          {isAuthenticated && questions.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                const session = await saveCurrentSession()
+                if (session) {
+                  toast.success('Session saved successfully!')
+                }
+              }}
+              className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              {currentSession ? 'Update Session' : 'Save Session'}
+            </Button>
+          )}
+          
           <Button
             variant="outline"
             size="sm"
@@ -605,6 +710,7 @@ function OutputsPane({
               setQuestions([])
               setAnswers({})
               setSavedQuestions([])
+              setCurrentSession(null)
               toast.success('New session started!')
             }}
           >
