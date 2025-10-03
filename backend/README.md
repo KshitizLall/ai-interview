@@ -28,35 +28,52 @@ backend/
 │       ├── file_service.py       # File processing service
 │       ├── openai_service.py     # OpenAI integration service
 │       └── pdf_service.py        # PDF generation service
+├── scripts/                      # Development scripts
+│   ├── dev.sh                    # Development server script
+│   ├── prod.sh                   # Production server script
+│   └── test.sh                   # Test and linting script
 ├── uploads/                      # File upload directory
 ├── exports/                      # PDF export directory
 ├── main.py                       # FastAPI application entry point
-├── requirements.txt              # Python dependencies
+├── pyproject.toml                # Poetry configuration and dependencies
+├── poetry.lock                   # Poetry lock file
+├── requirements.txt              # Legacy Python dependencies (kept for compatibility)
 └── .env.example                  # Environment variables template
 ```
 
 ## Setup Instructions
 
-### 1. Python Environment
+### 1. Install Poetry
 
 ```bash
-# Create virtual environment
-python -m venv venv
+# Install Poetry (if not already installed)
+pip install poetry
 
-# Activate virtual environment
-# On Windows:
-venv\Scripts\activate
-# On macOS/Linux:
-source venv/bin/activate
+# Or using the official installer
+curl -sSL https://install.python-poetry.org | python3 -
 ```
 
 ### 2. Install Dependencies
 
 ```bash
-pip install -r requirements.txt
+# Install all dependencies (including dev dependencies)
+poetry install
+
+# Or install only production dependencies
+poetry install --only=main,prod
 ```
 
-### 3. Environment Configuration
+### 3. Activate Poetry Environment
+
+```bash
+# Activate the Poetry virtual environment
+poetry shell
+
+# Or run commands directly with Poetry
+poetry run python main.py
+```
+
+### 4. Environment Configuration
 
 ```bash
 # Copy environment template
@@ -68,20 +85,26 @@ OPENAI_API_KEY=your_actual_openai_api_key_here
 
 Be sure to set a strong `JWT_SECRET_KEY` in your `.env` for token signing. You can also set `MONGO_URI` to override the default MongoDB connection string.
 
-### 4. Run the Application
+### 5. Run the Application
 
 ```bash
 # Development server with auto-reload
-python main.py
+poetry run python main.py
+
+# Or using Poetry scripts
+poetry run dev
 
 # Or using uvicorn directly
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+poetry run uvicorn main:app --reload --host 0.0.0.0 --port 10000
+
+# Production server
+poetry run prod
 ```
 
 The API will be available at:
-- **API Base URL**: http://localhost:8000
-- **Interactive Docs**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
+- **API Base URL**: http://localhost:10000
+- **Interactive Docs**: http://localhost:10000/docs
+- **ReDoc**: http://localhost:10000/redoc
 
 ## API Endpoints
 
@@ -144,6 +167,33 @@ Key configuration options in `.env`:
 
 ## Development
 
+### Poetry Commands
+
+```bash
+# Install dependencies
+poetry install
+
+# Add new dependency
+poetry add package-name
+
+# Add development dependency
+poetry add --group dev package-name
+
+# Update dependencies
+poetry update
+
+# Run tests
+poetry run test
+
+# Format code
+poetry run black .
+poetry run isort .
+
+# Lint code
+poetry run flake8 .
+poetry run mypy .
+```
+
 ### Adding New Endpoints
 
 1. Add new endpoint functions to `app/api/endpoints/interview.py`
@@ -156,7 +206,7 @@ Key configuration options in `.env`:
 1. Create new service file in `app/services/`
 2. Implement service class with required methods
 3. Import and use in endpoint handlers
-4. Add any new dependencies to `requirements.txt`
+4. Add any new dependencies using `poetry add package-name`
 
 ## Production Deployment
 
