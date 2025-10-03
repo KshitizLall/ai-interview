@@ -11,6 +11,8 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { FileText, Menu, X, ChevronDown } from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { useState, useEffect } from "react"
 import { useAuth } from "@/hooks/use-auth"
 
@@ -54,6 +56,21 @@ export function HeaderNavigation() {
     )
   }
 
+  // derive user initials from token (assumes JWT with sub or name)
+  const getInitials = (tkn?: string | null) => {
+    if (!tkn) return ''
+    try {
+      const payload = JSON.parse(atob(tkn.split('.')[1]))
+      const name = payload.name || payload.sub || payload.email || ''
+      const parts = String(name).split(/\s+/).filter(Boolean)
+      if (parts.length === 0) return ''
+      if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    } catch (err) {
+      return ''
+    }
+  }
+
   // close mobile menu if auth state changes
   useEffect(() => {
     setIsMobileMenuOpen(false)
@@ -65,12 +82,16 @@ export function HeaderNavigation() {
         <div className="flex items-center justify-between gap-4">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
-                <FileText className="w-4 h-4 text-primary-foreground" />
-              </div>
-              <span className="text-lg font-semibold tracking-tight">InterviewBot</span>
-            </Link>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link href={isLoggedIn ? "/prepare-interview" : "/"} className="flex items-center gap-3" aria-label="InterviewBot - Go to prepare interview">
+                  <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center transform transition-transform duration-200 hover:scale-105 hover:-rotate-3">
+                    <FileText className="w-4 h-4 text-primary-foreground" />
+                  </div>
+                  <span className="text-lg font-semibold tracking-tight">InterviewBot</span>
+                </Link>
+              </TooltipTrigger>
+            </Tooltip>
           </div>
 
           {/* Desktop Nav */}
@@ -83,8 +104,7 @@ export function HeaderNavigation() {
               </>
             ) : (
               <>
-                <Link href="/dashboard" className={navClass('/dashboard')}>Dashboard</Link>
-                <Link href="/prepare" className={navClass('/prepare')}>Prepare Interview</Link>
+                <Link href="/prepare-interview" className={navClass('/prepare-interview')}>Prepare Interview</Link>
               </>
             )}
           </nav>
@@ -99,9 +119,14 @@ export function HeaderNavigation() {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button aria-haspopup="menu" variant="ghost" className="px-3 py-2 flex items-center gap-2">
-                      <span className="text-sm">Profile</span>
-                      <ChevronDown className="w-4 h-4" />
-                    </Button>
+                        <div className="flex items-center gap-2">
+                          <Avatar className="w-7 h-7">
+                            {/* If you have an avatar image URL in token, AvatarImage can be used */}
+                            <AvatarFallback>{getInitials(token)}</AvatarFallback>
+                          </Avatar>
+                          <ChevronDown className="w-4 h-4" />
+                        </div>
+                      </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem asChild>
@@ -149,7 +174,7 @@ export function HeaderNavigation() {
               ) : (
                 <>
                   <Link href="/dashboard" className="text-base text-foreground" onClick={() => setIsMobileMenuOpen(false)}>Dashboard</Link>
-                  <Link href="/prepare" className="text-base text-foreground" onClick={() => setIsMobileMenuOpen(false)}>Prepare Interview</Link>
+                  <Link href="/prepare-interview" className="text-base text-foreground" onClick={() => setIsMobileMenuOpen(false)}>Prepare Interview</Link>
 
                   <div className="mt-2 border-t border-border/40 pt-3">
                     <Link href="/account" className="block text-sm text-muted-foreground mb-2" onClick={() => setIsMobileMenuOpen(false)}>Account Settings</Link>

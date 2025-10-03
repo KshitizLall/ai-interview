@@ -27,7 +27,7 @@ export function AuthenticatedArea() {
   const [answerTone, setAnswerTone] = useState('Concise')
   const [questionCount, setQuestionCount] = useState(5)
 
-  const sessionsByType = useMemo(() => ({ jd: sessions.filter(s => s.type === 'jd'), resume: sessions.filter(s => s.type === 'resume') }), [sessions])
+  // No separate tabs for JD/Resume: show all sessions in one list
 
   function toggleQuestionType(type: string) {
     setQuestionTypes(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type])
@@ -78,9 +78,9 @@ export function AuthenticatedArea() {
               <div className="text-xs text-muted-foreground">{sessions.length}</div>
             </div>
 
-            <div className="mb-3 flex gap-2">
-              <Button variant={uploadType === 'jd' ? 'default' : 'ghost'} size="sm" onClick={() => setUploadType('jd')}>Job Descriptions</Button>
-              <Button variant={uploadType === 'resume' ? 'default' : 'ghost'} size="sm" onClick={() => setUploadType('resume')}>Resumes</Button>
+            <div className="mb-3 flex items-center justify-between">
+              <div className="text-sm font-medium">Sessions</div>
+              <Button size="sm" onClick={() => { const el = document.getElementById('uploader'); el?.scrollIntoView({behavior: 'smooth'}); }}>Create New Session</Button>
             </div>
 
             <div className="mb-3">
@@ -90,9 +90,9 @@ export function AuthenticatedArea() {
             <div className="space-y-2 max-h-[60vh] overflow-y-auto">
               {sessions.length === 0 && (
                 <div className="p-4 bg-card border rounded-md text-sm text-muted-foreground">
-                  No sessions yet. Upload a JD or resume to get started.
+                  No sessions yet. Create a new session to get started.
                   <div className="mt-3">
-                    <Button size="sm" onClick={() => { const el = document.getElementById('uploader'); el?.scrollIntoView({behavior: 'smooth'}); }}>{uploadType === 'jd' ? 'Upload Job Description' : 'Upload Resume'}</Button>
+                    <Button size="sm" onClick={() => { const el = document.getElementById('uploader'); el?.scrollIntoView({behavior: 'smooth'}); }}>Create New Session</Button>
                   </div>
                 </div>
               )}

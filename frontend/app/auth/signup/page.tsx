@@ -65,8 +65,8 @@ export default function SignupPage() {
   const onSubmit = async (data: SignupFormData) => {
     setError(null)
     try {
-      await signup(data.email, data.password, data.name)
-      router.push('/')
+  await signup(data.email, data.password, data.name)
+  router.push('/prepare-interview')
     } catch (err: any) {
       setError(err?.message || 'Signup failed. Please try again.')
     }

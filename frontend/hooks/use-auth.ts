@@ -1,12 +1,14 @@
 "use client"
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { authService } from '@/lib/auth-service'
 
 const TOKEN_KEY = 'ib_access_token'
 const REMEMBER_KEY = 'ib_remember_token'
 
 export function useAuth() {
+  const router = useRouter()
   const [token, setToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -105,6 +107,12 @@ export function useAuth() {
       // ignore errors on logout
     } finally {
       saveToken(null, false)
+      // navigate to home to show unauthenticated initial UI
+      try {
+        router.push('/')
+      } catch (err) {
+        // ignore if navigation fails in non-router environments
+      }
       setLoading(false)
     }
   }, [token, saveToken])

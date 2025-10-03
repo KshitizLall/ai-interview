@@ -40,8 +40,8 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     setError(null)
     try {
-      await login(data.email, data.password, rememberMe)
-      router.push('/')
+  await login(data.email, data.password, rememberMe)
+  router.push('/prepare-interview')
     } catch (err: any) {
       setError(err?.message || 'Login failed. Please check your credentials and try again.')
     }
