@@ -202,7 +202,7 @@ export function FileUploadZone({
               placeholder="Paste your job description here..."
               value={text}
               onChange={(e) => setText(e.target.value)}
-              className="min-h-[200px] resize-none"
+              className="h-[200px] resize-none overflow-y-auto scrollbar-thin scrollbar-thumb-border/30 scrollbar-track-transparent"
             />
             <p className="text-xs text-muted-foreground">
               {text.length} characters • {Math.ceil(text.length / 4)} words (estimated)
