@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth"
 import { useSessions, Session, SessionItem } from "@/lib/session-store"
 import { FileUploadZone } from "@/components/file-upload-zone"
 import { QuestionsList } from "@/components/questions-list"
+import InputsPane from "@/components/inputs-pane"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -58,6 +59,48 @@ export function AuthenticatedArea() {
     })
 
     toast.success('Session created', { description: 'Your interview prep session was created' })
+  }
+
+  // When generation runs inside InputsPane, create a session with the generated questions
+  const handleGeneratedQuestions = (questions: any[]) => {
+    if (!questions || questions.length === 0) return
+
+    const items: SessionItem[] = questions.map((q: any) => ({
+      id: q.id,
+      question: q.question || q.text || q.prompt || "",
+      answer: q.answer || "",
+      category: q.type || q.category || "Technical",
+      difficulty: q.difficulty || "Medium",
+      createdAt: q.created_at || new Date().toISOString(),
+    }))
+
+    const newSession = createSession({
+      type: uploadType,
+      title: uploadType === 'jd' ? `JD - ${roleFocus}` : `Resume - ${roleFocus}`,
+      options: {
+        roleFocus,
+        seniority,
+        questionTypes,
+        answerTone,
+        questionCount,
+      },
+      items,
+    })
+
+    // Select the newly-created session so the user sees the results immediately
+    if (newSession && (newSession as any).id) selectSession((newSession as any).id)
+    toast.success('Session created from generated questions')
+  }
+
+  // Save answers from InputsPane into the currently selected session (if any)
+  const handleSaveAnswers = (answersOrUpdater: any) => {
+    if (!selected) return
+    const currentMap = selected.items.reduce((acc: any, item: any) => ({ ...acc, [item.id]: item.answer }), {})
+    const newAnswers = typeof answersOrUpdater === 'function' ? answersOrUpdater(currentMap) : answersOrUpdater
+
+    const updatedItems = selected.items.map((it: any) => ({ ...it, answer: newAnswers[it.id] ?? it.answer }))
+    updateSession(selected.id, { items: updatedItems })
+    toast.success('Answers saved to session')
   }
 
   const handleDelete = (id: string) => {
@@ -117,10 +160,23 @@ export function AuthenticatedArea() {
               <div id="uploader" className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Upload Job Description</CardTitle>
+                    <CardTitle>Upload Job Description / Resume</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <FileUploadZone title="Paste job description" text={text} setText={setText} isTextArea />
+                    {/* Use shared InputsPane so logic for upload and generation is consistent with public page */}
+                    <InputsPane
+                      resumeFile={file}
+                      setResumeFile={setFile}
+                      resumeText={text}
+                      setResumeText={setText}
+                      jobDescription={text}
+                      setJobDescription={setText}
+                      isGenerating={false}
+                      setIsGenerating={() => {}}
+                      setQuestions={handleGeneratedQuestions}
+                      setAnswers={handleSaveAnswers}
+                    />
+
                     <div className="mt-4 space-y-2">
                       <Input placeholder="Role focus" value={roleFocus} onChange={(e) => setRoleFocus(e.target.value)} />
                       <div className="flex gap-2 items-center">
@@ -159,57 +215,6 @@ export function AuthenticatedArea() {
 
                       <div className="mt-4">
                         <Button onClick={() => { setUploadType('jd'); handleStart(); }}>
-                          Start Interview Prep
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Upload Resume</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <FileUploadZone title="Upload or paste your resume" file={file} setFile={setFile} text={text} setText={setText} accept=".pdf,.docx,.txt" />
-                    <div className="mt-4 space-y-2">
-                      <Input placeholder="Role focus" value={roleFocus} onChange={(e) => setRoleFocus(e.target.value)} />
-                      <div className="flex gap-2 items-center">
-                        <Select onValueChange={(v) => setSeniority(v)}>
-                          <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Junior">Junior</SelectItem>
-                            <SelectItem value="Mid">Mid</SelectItem>
-                            <SelectItem value="Senior">Senior</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <label className="text-sm">Question types:</label>
-                        <div className="flex gap-2">
-                          <label className="flex items-center gap-2"><Checkbox checked={questionTypes.includes('Technical')} onCheckedChange={() => toggleQuestionType('Technical')} />Technical</label>
-                          <label className="flex items-center gap-2"><Checkbox checked={questionTypes.includes('Behavioral')} onCheckedChange={() => toggleQuestionType('Behavioral')} />Behavioral</label>
-                          <label className="flex items-center gap-2"><Checkbox checked={questionTypes.includes('Experience')} onCheckedChange={() => toggleQuestionType('Experience')} />Experience</label>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <label className="text-sm">Answer tone:</label>
-                        <Select onValueChange={(v) => setAnswerTone(v)}>
-                          <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Concise">Concise</SelectItem>
-                            <SelectItem value="Detailed">Detailed</SelectItem>
-                            <SelectItem value="STAR">STAR</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <label className="text-sm">Number of questions:</label>
-                        <Input type="number" value={String(questionCount)} onChange={(e) => setQuestionCount(Number(e.target.value))} className="w-24" />
-                      </div>
-
-                      <div className="mt-4">
-                        <Button onClick={() => { setUploadType('resume'); handleStart(); }}>
                           Start Interview Prep
                         </Button>
                       </div>
