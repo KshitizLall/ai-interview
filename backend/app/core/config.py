@@ -32,7 +32,7 @@ class Settings(BaseSettings):
 
     # MongoDB (Atlas) - used for auth / user storage
     MONGO_URI: str = "mongodb+srv://shivamjain169_db_user:dUxvRTypp4xkfbUz@ai-interview.s34qp5q.mongodb.net/?retryWrites=true&w=majority&appName=AI-INTERVIEW"
-
+    print('Mongo URI:', DATABASE_URL)
     # JWT settings
     JWT_SECRET_KEY: str = "change-me-in-production"
     JWT_ALGORITHM: str = "HS256"
