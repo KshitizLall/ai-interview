@@ -6,22 +6,39 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { AuthModal } from '@/components/auth-modal'
+import { CreditConsumptionAnimation } from '@/components/animations'
 import { Coins, Lock, Zap, TrendingUp } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface CreditDisplayProps {
   showUpgradeButton?: boolean
   size?: 'sm' | 'md' | 'lg'
   showProgress?: boolean
+  onCreditConsumption?: (amount: number) => void
 }
 
 export function CreditDisplay({ 
   showUpgradeButton = false, 
   size = 'md',
-  showProgress = true
+  showProgress = true,
+  onCreditConsumption
 }: CreditDisplayProps) {
   const { user, isAuthenticated, anonymousUsage, getRemainingQuota } = useAuth()
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [showCreditAnimation, setShowCreditAnimation] = useState(false)
+  const [lastCreditsUsed, setLastCreditsUsed] = useState(0)
+  const [prevCredits, setPrevCredits] = useState(user?.credits || 0)
+
+  // Watch for credit changes and trigger animation
+  useEffect(() => {
+    if (isAuthenticated && user && prevCredits > user.credits) {
+      const creditsUsed = prevCredits - user.credits
+      setLastCreditsUsed(creditsUsed)
+      setShowCreditAnimation(true)
+      onCreditConsumption?.(creditsUsed)
+    }
+    setPrevCredits(user?.credits || 0)
+  }, [user?.credits, isAuthenticated, prevCredits, onCreditConsumption])
 
   if (isAuthenticated && user) {
     // Authenticated user display
@@ -54,6 +71,12 @@ export function CreditDisplay({
             Get More Credits
           </Button>
         )}
+        
+        <CreditConsumptionAnimation
+          show={showCreditAnimation}
+          creditsUsed={lastCreditsUsed}
+          onComplete={() => setShowCreditAnimation(false)}
+        />
       </div>
     )
   }

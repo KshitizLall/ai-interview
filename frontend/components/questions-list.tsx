@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils"
 import { apiService } from "@/lib/api-service"
 import { useAuth } from "@/components/auth-provider"
 import { AuthModal } from "@/components/auth-modal"
+import { AnswerGenerationAnimation, InlineAnswerLoadingAnimation } from "@/components/animations"
 import { toast } from "sonner"
 
 interface Question {
@@ -48,6 +49,8 @@ export function QuestionsList({ questions, savedQuestions, setSavedQuestions, an
   const [aiAnswerStyle, setAiAnswerStyle] = useState<"professional" | "conversational" | "detailed" | "concise">("professional")
   const [showAiOptions, setShowAiOptions] = useState<Record<string, boolean>>({})
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [showAnswerAnimation, setShowAnswerAnimation] = useState(false)
+  const [currentGeneratingQuestion, setCurrentGeneratingQuestion] = useState<Question | null>(null)
 
   const toggleSave = (question: Question) => {
     // Use requestAnimationFrame for smooth UI updates
@@ -153,10 +156,12 @@ export function QuestionsList({ questions, savedQuestions, setSavedQuestions, an
       }
     }
     
-    // Immediate UI feedback
-    requestAnimationFrame(() => {
-      setAiGeneratingStatus(prev => ({ ...prev, [questionId]: true }))
-    })
+    // Show full-screen animation
+    setCurrentGeneratingQuestion(question)
+    setShowAnswerAnimation(true)
+    
+    // Also set inline generating status for fallback
+    setAiGeneratingStatus(prev => ({ ...prev, [questionId]: true }))
 
     // Defer heavy operations to prevent blocking
     setTimeout(async () => {
@@ -198,6 +203,8 @@ export function QuestionsList({ questions, savedQuestions, setSavedQuestions, an
       } catch (error) {
         console.error("AI generation error:", error)
         toast.error("Failed to generate AI answer. Please try again.")
+        // Hide animation on error
+        setShowAnswerAnimation(false)
       } finally {
         requestAnimationFrame(() => {
           setAiGeneratingStatus(prev => ({ ...prev, [questionId]: false }))
@@ -456,17 +463,21 @@ export function QuestionsList({ questions, savedQuestions, setSavedQuestions, an
                       </Card>
                     )}
 
-                    <Textarea
-                      value={currentAnswer}
-                      onChange={(e) => handleAnswerChange(question.id, e.target.value)}
-                      placeholder="Write your answer here...
+                    {aiGeneratingStatus[question.id] && !showAnswerAnimation ? (
+                      <InlineAnswerLoadingAnimation />
+                    ) : (
+                      <Textarea
+                        value={currentAnswer}
+                        onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+                        placeholder="Write your answer here...
 
 Tips:
 • Use the STAR method (Situation, Task, Action, Result) for behavioral questions
 • Be specific with examples and metrics
 • Keep it concise but comprehensive"
-                      className="min-h-[120px] resize-none"
-                    />
+                        className="min-h-[120px] resize-none"
+                      />
+                    )}
                   </div>
 
                   {/* Action Buttons */}
@@ -540,6 +551,15 @@ Tips:
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         initialTab="signup"
+      />
+      
+      <AnswerGenerationAnimation
+        show={showAnswerAnimation}
+        question={currentGeneratingQuestion?.question}
+        onComplete={() => {
+          setShowAnswerAnimation(false)
+          setCurrentGeneratingQuestion(null)
+        }}
       />
     </div>
   )

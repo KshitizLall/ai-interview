@@ -1,33 +1,29 @@
 "use client"
 
-import { BulkAnswerGenerator } from "@/components/bulk-answer-generator"
-import { ConnectionStatus } from "@/components/connection-status"
-import { FileUploadZone } from "@/components/file-upload-zone"
-import { Footer } from "@/components/footer"
-import { GenerationControls } from "@/components/generation-controls"
-import { HeaderNavigation } from "@/components/header-navigation"
-import { QuestionsList } from "@/components/questions-list"
-import { SavedQuestions } from "@/components/saved-questions"
-import { useWebSocketContext } from "@/components/websocket-provider"
 import { useAuth } from "@/components/auth-provider"
-import { SessionSidebar } from "@/components/session-sidebar"
+import { ConnectionStatus } from "@/components/connection-status"
 import { CreditDisplayCompact } from "@/components/credit-display"
+import { Footer } from "@/components/footer"
+import { HeaderNavigation } from "@/components/header-navigation"
+import { InputsPane } from "@/components/inputs-pane"
+import { OutputsPane } from "@/components/outputs-pane"
+import { SessionSidebar } from "@/components/session-sidebar"
+import { useWebSocketContext } from "@/components/websocket-provider"
 
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useReducedMotion } from "@/hooks/use-reduced-motion"
 import { apiService, InterviewSession } from "@/lib/api-service"
 import { sessionManager } from "@/lib/session-manager"
-import { Briefcase, Clock, Download, FileText, HelpCircle, Moon, Sparkles, Sun, SidebarClose, SidebarOpen } from "lucide-react"
+import { Briefcase, Clock, Download, FileText, HelpCircle, Moon, SidebarClose, SidebarOpen, Sparkles, Sun } from "lucide-react"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
 export default function HomePage() {
   const [isDark, setIsDark] = useState(false)
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [currentSession, setCurrentSession] = useState<InterviewSession | null>(null)
 
   const prefersReducedMotion = useReducedMotion()
@@ -545,197 +541,7 @@ export default function HomePage() {
   )
 }
 
-// Generation Controls Component
-function EnhancedGenerationControls({
-  resumeText,
-  jobDescription,
-  isGenerating,
-  setIsGenerating,
-  setQuestions,
-  setAnswers,
-}: {
-  resumeText: string
-  jobDescription: string
-  isGenerating: boolean
-  setIsGenerating: (generating: boolean) => void
-  setQuestions: (questions: any[]) => void
-  setAnswers?: (answers: Record<string, string>) => void
-}) {
-  const { generateQuestions, isConnected, progressUpdate } = useWebSocketContext()
 
-  return (
-    <GenerationControls
-      resumeText={resumeText}
-      jobDescription={jobDescription}
-      isGenerating={isGenerating}
-      setIsGenerating={setIsGenerating}
-      setQuestions={setQuestions}
-      setAnswers={setAnswers}
-      isConnected={isConnected}
-      progressUpdate={progressUpdate}
-      generateQuestions={generateQuestions}
-      startExpanded={true}
-    />
-  )
-}
 
-// Simplified Input Component
-function InputsPane({
-  resumeFile,
-  setResumeFile,
-  resumeText,
-  setResumeText,
-  jobDescription,
-  setJobDescription,
-  isGenerating,
-  setIsGenerating,
-  setQuestions,
-  setAnswers,
-}: any) {
-  const hasContent = resumeText.trim() || jobDescription.trim()
 
-  return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      {/* Simple Upload Areas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <h3 className="font-medium mb-3">Resume</h3>
-          <FileUploadZone
-            title="Upload or paste your resume"
-            file={resumeFile}
-            setFile={setResumeFile}
-            text={resumeText}
-            setText={setResumeText}
-            accept=".pdf,.docx,.txt"
-          />
-        </div>
-        
-        <div>
-          <h3 className="font-medium mb-3">Job Description</h3>
-          <FileUploadZone
-            title="Paste job description"
-            text={jobDescription}
-            setText={setJobDescription}
-            isTextArea={true}
-          />
-        </div>
-      </div>
 
-      {/* Generate Button */}
-      {hasContent && (
-        <div className="text-center">
-          <GenerationControls
-            resumeText={resumeText}
-            jobDescription={jobDescription}
-            isGenerating={isGenerating}
-            setIsGenerating={setIsGenerating}
-            setQuestions={setQuestions}
-            setAnswers={setAnswers}
-          />
-        </div>
-      )}
-    </div>
-  )
-}
-
-// Clean Output Pane Component
-function OutputsPane({
-  questions,
-  answers,
-  setAnswers,
-  savedQuestions,
-  setSavedQuestions,
-  activeTab,
-  setActiveTab,
-  resumeText,
-  jobDescription,
-  setQuestions,
-  resumeFile,
-  setResumeFile,
-  setResumeText,
-  setJobDescription,
-  isGenerating,
-  setIsGenerating,
-  isAuthenticated,
-  currentSession,
-  setCurrentSession,
-  saveCurrentSession,
-}: any) {
-  const answeredCount = Object.keys(answers).filter((key) => answers[key]?.trim().length > 0).length
-
-  return (
-    <div className="w-full max-w-5xl mx-auto space-y-6">
-      {/* Header Section */}
-      <div className="space-y-6">
-        {/* Title and Stats */}
-        <div className="text-center space-y-3">
-          <h1 className="text-3xl font-bold text-foreground">Your Questions</h1>
-          <div className="flex items-center justify-center gap-6 text-sm">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 dark:bg-green-900/30 rounded-full">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-green-700 dark:text-green-300 font-medium">{answeredCount} answered</span>
-            </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-gray-800/50 rounded-full">
-              <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-              <span className="text-gray-600 dark:text-gray-300 font-medium">{(questions?.length || 0) - answeredCount} remaining</span>
-            </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-full">
-              <span className="text-primary font-semibold">
-                {Math.round((answeredCount / (questions?.length || 1)) * 100)}% complete
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="w-full">
-          {activeTab === "questions" && questions?.length > 0 && (
-            <BulkAnswerGenerator
-              questions={questions}
-              resumeText={resumeText}
-              jobDescription={jobDescription}
-              answers={answers}
-              setAnswers={setAnswers}
-              className="w-full max-w-4xl mx-auto"
-            />
-          )}
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full justify-start h-10">
-          <TabsTrigger value="questions" className="flex items-center gap-2">
-            <FileText className="w-4 h-4" />
-            Questions ({questions?.length || 0})
-          </TabsTrigger>
-          <TabsTrigger value="saved" className="flex items-center gap-2">
-            <Briefcase className="w-4 h-4" />
-            Saved ({savedQuestions?.length || 0})
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Content */}
-        <div className="mt-6">
-          {activeTab === "questions" ? (
-            <QuestionsList
-              questions={questions}
-              savedQuestions={savedQuestions}
-              setSavedQuestions={setSavedQuestions}
-              answers={answers}
-              setAnswers={setAnswers}
-              resumeText={resumeText}
-              jobDescription={jobDescription}
-            />
-          ) : (
-            <SavedQuestions
-              savedQuestions={savedQuestions}
-              setSavedQuestions={setSavedQuestions}
-              answers={answers}
-            />
-          )}
-        </div>
-      </Tabs>
-    </div>
-  )
-}

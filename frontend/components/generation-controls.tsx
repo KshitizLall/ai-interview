@@ -13,8 +13,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useAuth } from "@/components/auth-provider"
 import { AuthModal } from "@/components/auth-modal"
+import { QuestionGenerationAnimation } from "@/components/animations"
 import { apiService, Question } from "@/lib/api-service"
 import {
+  AlertCircle,
   Briefcase,
   ChevronDown,
   ChevronRight,
@@ -79,6 +81,8 @@ export function GenerationControls({
   const [questionCount, setQuestionCount] = useState(10)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [includeAnswers, setIncludeAnswers] = useState(false)
+  const [showQuestionAnimation, setShowQuestionAnimation] = useState(false)
+  const [currentGenerationMode, setCurrentGenerationMode] = useState<'resume' | 'jd' | 'combined'>('combined')
 
   // Advanced options
   const [selectedQuestionTypes, setSelectedQuestionTypes] = useState<string[]>([])
@@ -118,6 +122,8 @@ export function GenerationControls({
     // Immediately update UI state to provide feedback
     setError(null)
     setIsGenerating(true)
+    setCurrentGenerationMode(mode)
+    setShowQuestionAnimation(true)
 
     // Use setTimeout to allow UI to update before heavy operations
     setTimeout(async () => {
@@ -187,225 +193,215 @@ export function GenerationControls({
         requestAnimationFrame(() => {
           setError(err instanceof Error ? err.message : "Failed to generate questions")
           setIsGenerating(false)
+          setShowQuestionAnimation(false)
         })
       }
     }, 0)
   }
 
   return (
-    <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-      <Card className="w-full glass-card-subtle border-border/30">
-        <CollapsibleTrigger asChild>
-          <CardHeader className="pb-3 cursor-pointer hover:bg-muted/20 transition-colors">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {isExpanded ? (
-                  <ChevronDown className="w-4 h-4" />
-                ) : (
-                  <ChevronRight className="w-4 h-4" />
-                )}
-                <Sparkles className="w-4 h-4" />
-                <CardTitle className="text-base">Generate Questions</CardTitle>
-                <Badge variant="secondary" className="text-xs">
-                  {questionCount} questions
+    <div className="w-full">
+      {/* Main Card with Modern Design */}
+      <Card className="relative overflow-hidden border border-border/50 bg-gradient-to-br from-background to-muted/20 shadow-lg">
+        {/* Header Section */}
+        <CardHeader className="relative pb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-primary/10 border border-primary/20">
+                <Sparkles className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-semibold">AI Question Generator</CardTitle>
+                <p className="text-sm text-muted-foreground">Create personalized interview questions</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              {isConnected && (
+                <Badge variant="default" className="text-xs font-medium">
+                  <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse" />
+                  Live
                 </Badge>
+              )}
+              <Badge variant="secondary" className="text-xs">
+                {questionCount} questions
+              </Badge>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="space-y-6">
+          {/* Credit/Usage Status */}
+          {!isAuthenticated && !canGenerateQuestions(questionCount) && (
+            <Alert className="border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-full bg-amber-100">
+                  <Lock className="h-4 w-4 text-amber-600" />
+                </div>
+                <div className="flex-1">
+                  <AlertDescription className="text-amber-800">
+                    <div className="space-y-3">
+                      <div>
+                        <p className="font-medium">Free limit reached!</p>
+                        <p className="text-sm">You've used all 10 free questions.</p>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        onClick={() => setShowAuthModal(true)}
+                        className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0"
+                      >
+                        <Zap className="w-4 h-4 mr-2" />
+                        Sign up for 50 free credits
+                      </Button>
+                    </div>
+                  </AlertDescription>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                {isConnected && (
-                  <Badge variant="default" className="text-xs">
-                    <Sparkles className="w-3 h-3 mr-1" />
-                    Real-time
-                  </Badge>
-                )}
-                {/* Quick generation buttons when collapsed */}
-                {!isExpanded && (
-                  <div className="flex flex-wrap gap-1">
-                    <OptimizedButton
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleGeneration('resume')
-                      }}
-                      disabled={!resumeText?.trim()}
-                      loading={isGenerating}
-                      preventBlocking={true}
-                      debounceMs={300}
-                      className="h-7 px-2 text-xs"
-                    >
-                      <FileText className="w-3 h-3 mr-1" />
-                      <span className="hidden sm:inline">Resume</span>
-                      <span className="sm:hidden">R</span>
-                    </OptimizedButton>
+            </Alert>
+          )}
 
-                    <OptimizedButton
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleGeneration('jd')
-                      }}
-                      disabled={!jobDescription?.trim()}
-                      loading={isGenerating}
-                      preventBlocking={true}
-                      debounceMs={300}
-                      className="h-7 px-2 text-xs"
-                    >
-                      <Briefcase className="w-3 h-3 mr-1" />
-                      <span className="hidden sm:inline">JD</span>
-                      <span className="sm:hidden">J</span>
-                    </OptimizedButton>
+          {isAuthenticated && !canGenerateQuestions(questionCount) && (
+            <Alert className="border-red-200 bg-gradient-to-r from-red-50 to-pink-50">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-full bg-red-100">
+                  <Lock className="h-4 w-4 text-red-600" />
+                </div>
+                <div className="flex-1">
+                  <AlertDescription className="text-red-800">
+                    <p className="font-medium">Insufficient credits!</p>
+                    <p className="text-sm">You need {questionCount} credits to generate questions.</p>
+                  </AlertDescription>
+                </div>
+              </div>
+            </Alert>
+          )}
 
-                    <OptimizedButton
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleGeneration('combined')
-                      }}
-                      disabled={!resumeText?.trim() || !jobDescription?.trim()}
-                      loading={isGenerating}
-                      preventBlocking={true}
-                      debounceMs={300}
-                      className="h-7 px-2 text-xs"
-                    >
-                      <Sparkles className="w-3 h-3 mr-1" />
-                      <span className="hidden sm:inline">Both</span>
-                      <span className="sm:hidden">B</span>
-                    </OptimizedButton>
-                  </div>
-                )}
+          {error && (
+            <Alert className="border-red-200 bg-gradient-to-r from-red-50 to-pink-50">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-full bg-red-100">
+                  <AlertCircle className="h-4 w-4 text-red-600" />
+                </div>
+                <div className="flex-1">
+                  <AlertDescription className="text-red-800 font-medium">
+                    {error}
+                  </AlertDescription>
+                </div>
+              </div>
+            </Alert>
+          )}
+
+          {/* Progress indicator */}
+          {progressUpdate && isGenerating && (
+            <div className="space-y-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                  <span className="text-sm font-medium text-blue-900">{progressUpdate.message}</span>
+                </div>
+                <span className="text-sm text-blue-700 font-medium">{progressUpdate.progress}%</span>
+              </div>
+              <div className="w-full bg-blue-100 rounded-full h-2">
+                <div
+                  className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${progressUpdate.progress}%` }}
+                />
               </div>
             </div>
-          </CardHeader>
-        </CollapsibleTrigger>
+          )}
 
-        <CollapsibleContent>
-          <CardContent className="space-y-4 pt-0">
-            {/* Credit/Usage Status */}
-            {!isAuthenticated && !canGenerateQuestions(questionCount) && (
-              <Alert className="border-orange-200 bg-orange-50">
-                <Lock className="h-4 w-4 text-orange-600" />
-                <AlertDescription className="text-orange-800">
-                  <div className="space-y-2">
-                    <p><strong>Free limit reached!</strong> You've used all 10 free questions.</p>
-                    <Button 
-                      size="sm" 
-                      onClick={() => setShowAuthModal(true)}
-                      className="w-full"
-                    >
-                      <Zap className="w-4 h-4 mr-2" />
-                      Sign up for 50 free credits
-                    </Button>
-                  </div>
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {isAuthenticated && !canGenerateQuestions(questionCount) && (
-              <Alert className="border-red-200 bg-red-50">
-                <Lock className="h-4 w-4 text-red-600" />
-                <AlertDescription className="text-red-800">
-                  <p><strong>Insufficient credits!</strong> You need {questionCount} credits to generate questions.</p>
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {error && (
-              <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-                <span className="text-sm text-destructive">{error}</span>
-              </div>
-            )}
-
-            {/* Progress indicator */}
-            {progressUpdate && isGenerating && (
-              <div className="space-y-2 p-3 bg-primary/5 border border-primary/20 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">{progressUpdate.message}</span>
-                  <span className="text-sm text-muted-foreground">{progressUpdate.progress}%</span>
-                </div>
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div
-                    className="bg-primary h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${progressUpdate.progress}%` }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Compact Basic Options */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label className="text-sm">Questions</Label>
-                <Select value={questionCount.toString()} onValueChange={(value) => setQuestionCount(parseInt(value))}>
-                  <SelectTrigger className="h-8">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="5">5</SelectItem>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="15">15</SelectItem>
-                    <SelectItem value="20">20</SelectItem>
-                    <SelectItem value="25">25</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-sm">Include Answers</Label>
-                <div className="flex items-center h-8">
-                  <Checkbox
-                    id="include-answers"
-                    checked={includeAnswers}
-                    onCheckedChange={(checked) => setIncludeAnswers(checked as boolean)}
-                  />
-                  <Label htmlFor="include-answers" className="text-sm ml-2">
-                    Auto-generate
-                  </Label>
-                </div>
-              </div>
-            </div>
-
-            {/* Advanced Options - Always Visible */}
-            <div className="space-y-3 border-t pt-3">
-              <div className="flex items-center gap-2">
-                <Settings className="w-3 h-3" />
-                <span className="text-sm font-medium">Advanced Options</span>
-                {(selectedQuestionTypes.length > 0 || selectedDifficulties.length > 0) && (
-                  <Badge variant="secondary" className="text-xs ml-auto">
-                    {selectedQuestionTypes.length + selectedDifficulties.length} filters
-                  </Badge>
-                )}
-              </div>
-              <div className="space-y-3">
-                {/* Compact Question Types */}
+          {/* Configuration Section */}
+          <div className="grid gap-6">
+            {/* Basic Options */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <Settings className="w-4 h-4" />
+                Configuration
+              </h3>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Types</Label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-1">
+                  <Label className="text-sm font-medium">Number of Questions</Label>
+                  <Select value={questionCount.toString()} onValueChange={(value) => setQuestionCount(parseInt(value))}>
+                    <SelectTrigger className="h-10">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5 Questions</SelectItem>
+                      <SelectItem value="10">10 Questions</SelectItem>
+                      <SelectItem value="15">15 Questions</SelectItem>
+                      <SelectItem value="20">20 Questions</SelectItem>
+                      <SelectItem value="25">25 Questions</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">AI-Generated Answers</Label>
+                  <div className="flex items-center space-x-2 h-10 px-3 border border-border rounded-lg bg-background/50">
+                    <Checkbox
+                      id="include-answers"
+                      checked={includeAnswers}
+                      onCheckedChange={(checked) => setIncludeAnswers(checked as boolean)}
+                    />
+                    <Label htmlFor="include-answers" className="text-sm">
+                      Include sample answers
+                    </Label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Advanced Filters */}
+            <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" className="w-full justify-between p-0 h-auto">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold">Advanced Filters</span>
+                    {(selectedQuestionTypes.length > 0 || selectedDifficulties.length > 0) && (
+                      <Badge variant="secondary" className="text-xs">
+                        {selectedQuestionTypes.length + selectedDifficulties.length} active
+                      </Badge>
+                    )}
+                  </div>
+                  {isExpanded ? (
+                    <ChevronDown className="w-4 h-4" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4" />
+                  )}
+                </Button>
+              </CollapsibleTrigger>
+              
+              <CollapsibleContent className="space-y-4 mt-4">
+                {/* Question Types */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Question Types</Label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {QUESTION_TYPES.map((type) => (
                       <Button
                         key={type.value}
                         variant={selectedQuestionTypes.includes(type.value) ? "default" : "outline"}
                         size="sm"
-                        className="h-6 px-2 text-xs justify-start"
+                        className="h-10 justify-start"
                         onClick={() => handleTypeToggle(type.value)}
                       >
-                        <span className="mr-1">{type.icon}</span>
+                        <span className="mr-2 text-base">{type.icon}</span>
                         <span className="truncate">{type.label}</span>
                       </Button>
                     ))}
                   </div>
                 </div>
 
-                {/* Compact Difficulty Levels */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Difficulty</Label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1">
+                {/* Difficulty Levels */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Difficulty Level</Label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {DIFFICULTY_LEVELS.map((level) => (
                       <Button
                         key={level.value}
                         variant={selectedDifficulties.includes(level.value) ? "default" : "outline"}
                         size="sm"
-                        className="h-6 px-2 text-xs"
+                        className="h-10"
                         onClick={() => handleDifficultyToggle(level.value)}
                       >
                         {level.label}
@@ -413,58 +409,61 @@ export function GenerationControls({
                     ))}
                   </div>
                 </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
 
+          {/* Generation Buttons */}
+          <div className="space-y-4 pt-2 border-t border-border/50">
+            <h3 className="text-sm font-semibold text-foreground">Generate Questions</h3>
+            
+            <div className="grid grid-cols-1 gap-3">
+              {/* Primary Combined Button */}
+              <OptimizedButton
+                size="lg"
+                onClick={() => handleGeneration('combined')}
+                disabled={!resumeText?.trim() || !jobDescription?.trim() || isGenerating}
+                loading={isGenerating && currentGenerationMode === 'combined'}
+                preventBlocking={true}
+                debounceMs={300}
+                className="h-12 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground font-medium"
+              >
+                <Sparkles className="w-5 h-5 mr-2" />
+                Generate from Resume + Job Description
+                <span className="ml-auto text-xs opacity-80">Recommended</span>
+              </OptimizedButton>
 
+              {/* Secondary Options */}
+              <div className="grid grid-cols-2 gap-3">
+                <OptimizedButton
+                  variant="outline"
+                  onClick={() => handleGeneration('resume')}
+                  disabled={!resumeText?.trim() || isGenerating}
+                  loading={isGenerating && currentGenerationMode === 'resume'}
+                  preventBlocking={true}
+                  debounceMs={300}
+                  className="h-10"
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  From Resume Only
+                </OptimizedButton>
+
+                <OptimizedButton
+                  variant="outline"
+                  onClick={() => handleGeneration('jd')}
+                  disabled={!jobDescription?.trim() || isGenerating}
+                  loading={isGenerating && currentGenerationMode === 'jd'}
+                  preventBlocking={true}
+                  debounceMs={300}
+                  className="h-10"
+                >
+                  <Briefcase className="w-4 h-4 mr-2" />
+                  From Job Description
+                </OptimizedButton>
               </div>
             </div>
-
-            {/* Full Generation Buttons */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <OptimizedButton
-                size="sm"
-                onClick={() => handleGeneration('resume')}
-                disabled={!resumeText?.trim()}
-                loading={isGenerating}
-                preventBlocking={true}
-                debounceMs={300}
-                className="text-xs"
-              >
-                <FileText className="w-3 h-3 mr-1" />
-                <span className="hidden sm:inline">Resume</span>
-                <span className="sm:hidden">From Resume</span>
-              </OptimizedButton>
-
-              <OptimizedButton
-                size="sm"
-                variant="outline"
-                onClick={() => handleGeneration('jd')}
-                disabled={!jobDescription?.trim()}
-                loading={isGenerating}
-                preventBlocking={true}
-                debounceMs={300}
-                className="text-xs"
-              >
-                <Briefcase className="w-3 h-3 mr-1" />
-                <span className="hidden sm:inline">Job Desc</span>
-                <span className="sm:hidden">From Job Description</span>
-              </OptimizedButton>
-
-              <OptimizedButton
-                size="sm"
-                onClick={() => handleGeneration('combined')}
-                disabled={!resumeText?.trim() || !jobDescription?.trim()}
-                loading={isGenerating}
-                preventBlocking={true}
-                debounceMs={300}
-                className="text-xs sm:col-span-1 col-span-1"
-              >
-                <Sparkles className="w-3 h-3 mr-1" />
-                <span className="hidden sm:inline">Both</span>
-                <span className="sm:hidden">From Both</span>
-              </OptimizedButton>
-            </div>
-          </CardContent>
-        </CollapsibleContent>
+          </div>
+        </CardContent>
       </Card>
       
       <AuthModal 
@@ -472,6 +471,16 @@ export function GenerationControls({
         onClose={() => setShowAuthModal(false)}
         initialTab="signup"
       />
-    </Collapsible>
+      
+      <QuestionGenerationAnimation
+        show={showQuestionAnimation}
+        mode={currentGenerationMode}
+        questionCount={questionCount}
+        onComplete={() => {
+          setShowQuestionAnimation(false)
+          setIsGenerating(false)
+        }}
+      />
+    </div>
   )
 }
