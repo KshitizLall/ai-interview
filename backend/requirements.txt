@@ -46,6 +46,8 @@ zxcvbn==4.4.28               # Advanced password strength validation
 fastapi-limiter==0.1.6       # Alternative rate limiting implementation
 
 # Development and Testing (Optional - uncomment for development)
-# pytest==7.4.3
-# pytest-asyncio==0.21.1
-# httpx==0.27.0              # For testing API endpoints
+# pytest==8.3.4
+# pytest-asyncio==0.24.0
+# black==24.10.0             # Code formatting
+# flake8==7.1.1              # Linting
+# mypy==1.13.0               # Type checking

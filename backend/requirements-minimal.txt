@@ -1,0 +1,38 @@
+# Minimal Production Requirements - Essential packages only
+# Use this for deployment to minimize build time and image size
+
+# Core Framework
+fastapi==0.117.1
+uvicorn[standard]==0.36.0
+
+# Data Validation
+pydantic==2.11.9
+pydantic-settings==2.10.1
+
+# Database
+motor==3.7.1
+
+# Security (CRITICAL)
+PyJWT==2.10.1
+passlib[bcrypt]==1.7.4
+bcrypt==4.2.0
+cryptography==44.0.0
+slowapi==0.1.9
+limits==3.13.0
+email-validator==2.2.0
+zxcvbn==4.4.28
+
+# File Processing
+python-multipart==0.0.20
+aiofiles==24.1.0
+PyPDF2==3.0.1
+python-docx==1.2.0
+
+# Environment
+python-dotenv==1.1.1
+
+# AI
+openai==1.108.1
+
+# Production Server
+gunicorn==23.0.0
