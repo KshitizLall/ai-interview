@@ -1,0 +1,23 @@
+# Ultra-minimal requirements for deployment
+# Only the absolute essentials
+
+fastapi==0.117.1
+uvicorn[standard]==0.36.0
+pydantic==2.11.9
+pydantic-settings==2.10.1
+motor==3.7.1
+PyJWT==2.10.1
+passlib[bcrypt]==1.7.4
+bcrypt==4.2.0
+cryptography==44.0.0
+slowapi==0.1.9
+limits==3.13.0
+email-validator==2.2.0
+zxcvbn==4.4.28
+python-multipart==0.0.20
+aiofiles==24.1.0
+PyPDF2==3.0.1
+python-docx==1.2.0
+python-dotenv==1.1.1
+openai==1.108.1
+gunicorn==23.0.0
