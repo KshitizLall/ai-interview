@@ -1,76 +1,110 @@
 from typing import Optional
-from fastapi import HTTPException, Depends, status
+from fastapi import HTTPException, Depends, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import JWTError, jwt
+import logging
 
 from app.core.config import settings
-from app.services.auth_service import auth_service
+from app.services.auth_service import auth_service, verify_token, AuthError, TokenType
 from app.models.schemas import UserInDB
 
-security = HTTPBearer()
+logger = logging.getLogger(__name__)
+
+security = HTTPBearer(auto_error=False)  # Don't auto-error for optional auth
 
 
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> UserInDB:
-    """Get the current authenticated user from JWT token"""
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    
-    try:
-        payload = jwt.decode(
-            credentials.credentials, 
-            settings.JWT_SECRET_KEY, 
-            algorithms=[settings.JWT_ALGORITHM]
-        )
-        user_id: str = payload.get("user_id")
-        if user_id is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
-    
-    user = await auth_service.get_user_by_id(user_id)
-    if user is None:
-        raise credentials_exception
-    
-    # Check if token is in user's active tokens (optional additional security)
-    if credentials.credentials not in user.tokens:
+async def get_current_user(
+    request: Request,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+) -> UserInDB:
+    """Get the current authenticated user from JWT token with enhanced security"""
+    if not credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token has been revoked",
+            detail="Authorization token required",
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    return user
+    token = credentials.credentials
+    
+    try:
+        # Verify token format and signature
+        payload = verify_token(token, TokenType.ACCESS)
+        user_id = payload.get("user_id")
+        
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token payload",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        # Check if token is blacklisted
+        if await auth_service.is_token_blacklisted(token):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token has been revoked",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        # Get user from database
+        user = await auth_service.get_user_by_id(user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found or inactive",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        # Log successful authentication for security monitoring
+        client_ip = request.client.host if request.client else "unknown"
+        logger.info(f"User {user.email} authenticated from {client_ip}")
+        
+        return user
+        
+    except AuthError as e:
+        error_details = {
+            "TOKEN_EXPIRED": "Token has expired, please login again",
+            "INVALID_TOKEN": "Invalid or malformed token",
+        }
+        
+        detail = error_details.get(e.code, "Authentication failed")
+        
+        # Log authentication failure
+        client_ip = request.client.host if request.client else "unknown"
+        logger.warning(f"Authentication failed from {client_ip}: {e.message}")
+        
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=detail,
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected authentication error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication failed",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 
-async def get_current_user_optional(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)) -> Optional[UserInDB]:
+async def get_current_user_optional(
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
+) -> Optional[UserInDB]:
     """Get the current authenticated user from JWT token, but allow None for anonymous users"""
     if not credentials:
         return None
     
     try:
-        payload = jwt.decode(
-            credentials.credentials, 
-            settings.JWT_SECRET_KEY, 
-            algorithms=[settings.JWT_ALGORITHM]
-        )
-        user_id: str = payload.get("user_id")
-        if user_id is None:
-            return None
-    except JWTError:
+        return await get_current_user(request, credentials)
+    except HTTPException:
+        # For optional auth, return None instead of raising error
         return None
-    
-    user = await auth_service.get_user_by_id(user_id)
-    if user is None:
+    except Exception as e:
+        logger.warning(f"Optional auth failed: {e}")
         return None
-    
-    # Check if token is in user's active tokens
-    if credentials.credentials not in user.tokens:
-        return None
-    
-    return user
 
 
 async def verify_credits(user: UserInDB, required_credits: int = 1) -> UserInDB:
@@ -78,8 +112,24 @@ async def verify_credits(user: UserInDB, required_credits: int = 1) -> UserInDB:
     if user.credits < required_credits:
         raise HTTPException(
             status_code=status.HTTP_402_PAYMENT_REQUIRED,
-            detail=f"Insufficient credits. Required: {required_credits}, Available: {user.credits}"
+            detail=f"Insufficient credits. Required: {required_credits}, Available: {user.credits}",
+            headers={"X-Credits-Required": str(required_credits), "X-Credits-Available": str(user.credits)}
         )
+    return user
+
+
+async def verify_admin_role(user: UserInDB) -> UserInDB:
+    """Verify that user has admin privileges"""
+    # For now, check if user has a specific admin field or email pattern
+    # In production, implement proper role-based access control
+    admin_emails = ["admin@interviewbot.com"]  # Configure in settings
+    
+    if user.email not in admin_emails:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required"
+        )
+    
     return user
 
 
@@ -102,6 +152,27 @@ class AuthDependency:
         async def _verify_user_credits(user: UserInDB = Depends(get_current_user)) -> UserInDB:
             return await verify_credits(user, required_credits)
         return Depends(_verify_user_credits)
+    
+    @staticmethod
+    def admin_required():
+        """Admin authentication required"""
+        async def _verify_admin(user: UserInDB = Depends(get_current_user)) -> UserInDB:
+            return await verify_admin_role(user)
+        return Depends(_verify_admin)
 
 
+# Create auth dependency instance
 auth_dep = AuthDependency()
+
+
+# Middleware for token cleanup (optional)
+class TokenCleanupMiddleware:
+    """Middleware to clean up expired tokens periodically"""
+    
+    def __init__(self, app):
+        self.app = app
+    
+    async def __call__(self, scope, receive, send):
+        # Add token cleanup logic here if needed
+        # This could run periodically to clean up expired blacklisted tokens
+        await self.app(scope, receive, send)

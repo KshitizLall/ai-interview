@@ -1,64 +1,174 @@
-from fastapi import APIRouter, HTTPException, Depends, Header
+from fastapi import APIRouter, HTTPException, Depends, Header, Request, status
 from datetime import timedelta
+import logging
 
 from app.models.schemas import (
     UserCreate, TokenResponse, LogoutResponse, UserPublic, UserProfileUpdate,
     CreditCheckRequest, CreditCheckResponse, CreditDeductRequest, CreditDeductResponse
 )
-from app.services.auth_service import auth_service, create_access_token
+from app.services.auth_service import auth_service, AuthError
 from app.core.config import settings
 from app.core.auth_middleware import auth_dep
+from app.core.security_middleware import (
+    auth_rate_limit, signup_rate_limit, SecurityMiddleware, get_client_identifier
+)
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.post("/signup", response_model=TokenResponse)
-async def signup(user: UserCreate):
-    """Register a new user and return JWT token"""
+@router.post("/signup")
+@signup_rate_limit()
+async def signup(request: Request, user: UserCreate):
+    """Register a new user and return JWT tokens with enhanced security"""
+    client_identifier = get_client_identifier(request, user.email)
+    
     try:
-        new_user = await auth_service.create_user(user)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        # Check rate limiting and lockout
+        SecurityMiddleware.check_rate_limit_and_lockout(client_identifier)
+        
+        # Create user with enhanced validation
+        new_user, access_token, refresh_token = await auth_service.create_user(user)
+        
+        # Record successful attempt
+        SecurityMiddleware.record_successful_attempt(client_identifier)
+        
+        logger.info(f"New user registered: {user.email}")
+        
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+            "expires_in": settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            "user": {
+                "id": new_user.id,
+                "email": new_user.email,
+                "name": new_user.name,
+                "credits": new_user.credits
+            }
+        }
+        
+    except AuthError as e:
+        # Record failed attempt
+        SecurityMiddleware.record_failed_attempt(client_identifier)
+        
+        error_codes = {
+            "INVALID_EMAIL": status.HTTP_400_BAD_REQUEST,
+            "WEAK_PASSWORD": status.HTTP_400_BAD_REQUEST,
+            "EMAIL_EXISTS": status.HTTP_409_CONFLICT
+        }
+        
+        status_code = error_codes.get(e.code, status.HTTP_400_BAD_REQUEST)
+        logger.warning(f"Signup failed for {user.email}: {e.message}")
+        
+        raise HTTPException(status_code=status_code, detail=e.message)
+    except Exception as e:
+        SecurityMiddleware.record_failed_attempt(client_identifier)
+        logger.error(f"Signup error for {user.email}: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Registration failed")
 
-    access_token = create_access_token({"sub": new_user.email, "user_id": new_user.id}, expires_delta=timedelta(seconds=settings.JWT_EXPIRATION_SECONDS))
-    await auth_service.add_token(new_user.id, access_token)
-    return TokenResponse(access_token=access_token)
 
-
-@router.post("/login", response_model=TokenResponse)
-async def login(credentials: UserCreate):
-    """Authenticate user and return JWT token"""
-    user = await auth_service.authenticate_user(credentials.email, credentials.password)
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid email or password")
-
-    access_token = create_access_token({"sub": user.email, "user_id": user.id}, expires_delta=timedelta(seconds=settings.JWT_EXPIRATION_SECONDS))
-    await auth_service.add_token(user.id, access_token)
-    return TokenResponse(access_token=access_token)
-
-
-@router.post("/logout", response_model=LogoutResponse)
-async def logout(authorization: str = Header(None)):
-    """Logout by removing token from user's token list (if present). Pass Authorization header: Bearer <token>"""
-    if not authorization:
-        raise HTTPException(status_code=400, detail="Missing Authorization header")
-
+@router.post("/login")
+@auth_rate_limit()
+async def login(request: Request, credentials: UserCreate):
+    """Authenticate user and return JWT tokens with enhanced security"""
+    client_identifier = get_client_identifier(request, credentials.email)
+    
     try:
-        scheme, token = authorization.split()
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid Authorization header format")
+        # Check rate limiting and lockout
+        SecurityMiddleware.check_rate_limit_and_lockout(client_identifier)
+        
+        # Authenticate user
+        user, access_token, refresh_token = await auth_service.authenticate_user(
+            credentials.email, credentials.password
+        )
+        
+        # Record successful attempt
+        SecurityMiddleware.record_successful_attempt(client_identifier)
+        
+        logger.info(f"User logged in: {credentials.email}")
+        
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+            "expires_in": settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "name": user.name,
+                "credits": user.credits
+            }
+        }
+        
+    except AuthError as e:
+        # Record failed attempt
+        SecurityMiddleware.record_failed_attempt(client_identifier)
+        
+        error_codes = {
+            "INVALID_CREDENTIALS": status.HTTP_401_UNAUTHORIZED,
+            "ACCOUNT_LOCKED": status.HTTP_423_LOCKED,
+            "ACCOUNT_DEACTIVATED": status.HTTP_403_FORBIDDEN
+        }
+        
+        status_code = error_codes.get(e.code, status.HTTP_401_UNAUTHORIZED)
+        
+        # Don't expose specific error details for security
+        if e.code == "ACCOUNT_LOCKED":
+            detail = e.message
+        else:
+            detail = "Invalid email or password"
+            
+        logger.warning(f"Login failed for {credentials.email}: {e.message}")
+        raise HTTPException(status_code=status_code, detail=detail)
+    except Exception as e:
+        SecurityMiddleware.record_failed_attempt(client_identifier)
+        logger.error(f"Login error for {credentials.email}: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Authentication failed")
 
-    # Decode to get user_id
+
+@router.post("/refresh")
+async def refresh_token(refresh_token: str = Header(..., alias="X-Refresh-Token")):
+    """Refresh access token using refresh token"""
     try:
-        payload = __import__("jose").jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
-        user_id = payload.get("user_id")
-        if user_id:
-            await auth_service.remove_token(user_id, token)
-    except Exception:
-        # If token invalid, just return success so client can clear it
-        pass
+        new_access_token, new_refresh_token = await auth_service.refresh_access_token(refresh_token)
+        
+        return {
+            "access_token": new_access_token,
+            "refresh_token": new_refresh_token,
+            "token_type": "bearer",
+            "expires_in": settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        }
+        
+    except AuthError as e:
+        logger.warning(f"Token refresh failed: {e.message}")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+    except Exception as e:
+        logger.error(f"Token refresh error: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Token refresh failed")
 
-    return LogoutResponse(detail="Logged out")
+
+@router.post("/logout")
+async def logout(
+    current_user = auth_dep.required(),
+    refresh_token: str = Header(None, alias="X-Refresh-Token")
+):
+    """Logout user and revoke tokens"""
+    try:
+        # Revoke refresh tokens
+        if refresh_token:
+            await auth_service.revoke_refresh_token(current_user.id, refresh_token)
+        else:
+            # Revoke all refresh tokens if no specific token provided
+            await auth_service.revoke_refresh_token(current_user.id)
+        
+        logger.info(f"User logged out: {current_user.email}")
+        return {"detail": "Successfully logged out"}
+        
+    except Exception as e:
+        logger.error(f"Logout error for {current_user.email}: {e}")
+        # Return success even if token revocation fails
+        return {"detail": "Logged out"}
 
 
 @router.get("/profile", response_model=UserPublic)

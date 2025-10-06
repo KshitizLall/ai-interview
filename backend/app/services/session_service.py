@@ -1,10 +1,13 @@
 from datetime import datetime
 from typing import Optional, List
 from bson import ObjectId
+import logging
 
 from app.core.mongo import get_database
 from app.models.schemas import InterviewSession, SessionCreate, SessionUpdate, Question
 from app.services.auth_service import auth_service
+
+logger = logging.getLogger(__name__)
 
 
 class SessionService:
@@ -14,41 +17,57 @@ class SessionService:
 
     async def create_session(self, user_id: str, session_data: SessionCreate) -> InterviewSession:
         """Create a new interview session for a user"""
-        session_doc = {
-            "user_id": user_id,
-            "company_name": session_data.company_name,
-            "job_title": session_data.job_title,
-            "resume_filename": session_data.resume_filename,
-            "resume_text": session_data.resume_text,
-            "job_description": session_data.job_description,
-            "questions": [],
-            "answers": {},
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow(),
-            "is_active": True
-        }
+        try:
+            session_doc = {
+                "user_id": user_id,
+                "company_name": session_data.company_name,
+                "job_title": session_data.job_title,
+                "resume_filename": session_data.resume_filename,
+                "resume_text": session_data.resume_text,
+                "job_description": session_data.job_description,
+                "questions": [],
+                "answers": {},
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "is_active": True
+            }
 
-        result = await self.sessions.insert_one(session_doc)
-        session_id = str(result.inserted_id)
-        session_doc["id"] = session_id
+            result = await self.sessions.insert_one(session_doc)
+            session_id = str(result.inserted_id)
+            session_doc["id"] = session_id
 
-        # Add session to user's session list
-        await auth_service.add_session_to_user(user_id, session_id)
-
-        return InterviewSession(**session_doc)
+            # Add session to user's session list
+            await auth_service.add_session_to_user(user_id, session_id)
+            
+            logger.info(f"Created session {session_id} for user {user_id}")
+            return InterviewSession(**session_doc)
+            
+        except Exception as e:
+            logger.error(f"Failed to create session for user {user_id}: {e}")
+            raise
 
     async def get_session(self, session_id: str, user_id: str) -> Optional[InterviewSession]:
         """Get a specific session by ID (only if it belongs to the user)"""
-        session_doc = await self.sessions.find_one({
-            "_id": ObjectId(session_id),
-            "user_id": user_id
-        })
-        
-        if not session_doc:
-            return None
+        try:
+            # Validate ObjectId format
+            if not ObjectId.is_valid(session_id):
+                logger.warning(f"Invalid session ID format: {session_id}")
+                return None
+                
+            session_doc = await self.sessions.find_one({
+                "_id": ObjectId(session_id),
+                "user_id": user_id
+            })
             
-        session_doc["id"] = str(session_doc["_id"])
-        return InterviewSession(**session_doc)
+            if not session_doc:
+                return None
+                
+            session_doc["id"] = str(session_doc["_id"])
+            return InterviewSession(**session_doc)
+            
+        except Exception as e:
+            logger.error(f"Failed to get session {session_id} for user {user_id}: {e}")
+            return None
 
     async def get_user_sessions(self, user_id: str, active_only: bool = True) -> List[InterviewSession]:
         """Get all sessions for a user"""
@@ -81,7 +100,23 @@ class SessionService:
     async def add_questions_to_session(self, session_id: str, user_id: str, questions: List[Question]) -> Optional[InterviewSession]:
         """Add questions to a session"""
         # Convert questions to dict format for MongoDB
-        questions_dict = [q.dict() for q in questions]
+        questions_dict = []
+        for q in questions:
+            if hasattr(q, 'dict'):
+                questions_dict.append(q.dict())
+            elif isinstance(q, dict):
+                questions_dict.append(q)
+            else:
+                # Convert Question object to dict manually
+                questions_dict.append({
+                    "id": q.id,
+                    "question": q.question,
+                    "type": q.type,
+                    "difficulty": q.difficulty,
+                    "relevance_score": q.relevance_score,
+                    "answer": getattr(q, 'answer', None),
+                    "created_at": getattr(q, 'created_at', datetime.utcnow())
+                })
         
         result = await self.sessions.update_one(
             {"_id": ObjectId(session_id), "user_id": user_id},
@@ -148,20 +183,32 @@ class SessionService:
 
     async def get_session_stats(self, session_id: str, user_id: str) -> Optional[dict]:
         """Get statistics for a session"""
-        session = await self.get_session(session_id, user_id)
-        if not session:
+        try:
+            session = await self.get_session(session_id, user_id)
+            if not session:
+                return None
+
+            total_questions = len(session.questions)
+            answered_questions = 0
+            
+            # Handle both Question objects and dict format
+            for q in session.questions:
+                question_id = q.id if hasattr(q, 'id') else q.get('id')
+                if question_id and session.answers.get(question_id):
+                    answered_questions += 1
+            
+            completion_percentage = (answered_questions / total_questions * 100) if total_questions > 0 else 0
+
+            return {
+                "total_questions": total_questions,
+                "answered_questions": answered_questions,
+                "completion_percentage": completion_percentage,
+                "last_updated": session.updated_at
+            }
+            
+        except Exception as e:
+            logger.error(f"Failed to get session stats for {session_id}: {e}")
             return None
-
-        total_questions = len(session.questions)
-        answered_questions = len([q for q in session.questions if session.answers.get(q.id)])
-        completion_percentage = (answered_questions / total_questions * 100) if total_questions > 0 else 0
-
-        return {
-            "total_questions": total_questions,
-            "answered_questions": answered_questions,
-            "completion_percentage": completion_percentage,
-            "last_updated": session.updated_at
-        }
 
     async def search_sessions(self, user_id: str, query: str) -> List[InterviewSession]:
         """Search sessions by company name or job title"""

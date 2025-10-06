@@ -1,14 +1,14 @@
 "use client"
 
-import { useAuth } from '@/components/auth-provider'
-import { Progress } from '@/components/ui/progress'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { AuthModal } from '@/components/auth-modal'
 import { CreditConsumptionAnimation } from '@/components/animations'
-import { Coins, Lock, Zap, TrendingUp } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { AuthModal } from '@/components/auth-modal'
+import { useAuth } from '@/components/auth-provider'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { Coins, Lock, TrendingUp } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 interface CreditDisplayProps {
   showUpgradeButton?: boolean
@@ -109,19 +109,6 @@ export function CreditDisplay({
               : 'Free limit reached'
             }
           </p>
-        </div>
-      )}
-
-      {showUpgradeButton && (
-        <div className="mt-3">
-          <Button 
-            size="sm" 
-            onClick={() => setShowAuthModal(true)}
-            className="w-full"
-          >
-            <Zap className="w-4 h-4 mr-2" />
-            Login for 50 Free Credits
-          </Button>
         </div>
       )}
 

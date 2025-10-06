@@ -69,18 +69,23 @@ async def initialize_database():
     """Initialize the database with collections and indexes"""
     print("🚀 Initializing database...")
     
-    # Verify connection
-    if not await verify_database_connection():
+    try:
+        # Verify connection
+        if not await verify_database_connection():
+            return False
+        
+        # Create collections
+        await create_collections()
+        
+        # Create indexes
+        await create_indexes()
+        
+        print("✅ Database initialization completed successfully!")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Database initialization failed: {e}")
         return False
-    
-    # Create collections
-    await create_collections()
-    
-    # Create indexes
-    await create_indexes()
-    
-    print("✅ Database initialization completed successfully!")
-    return True
 
 
 async def get_database_stats():

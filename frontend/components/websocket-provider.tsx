@@ -1,7 +1,7 @@
 "use client"
 
-import React, { createContext, useContext, useEffect, useState } from 'react'
-import { useWebSocket, WebSocketStatus, ProgressUpdate } from '@/hooks/use-websocket'
+import { ProgressUpdate, useWebSocket, WebSocketStatus } from '@/hooks/use-websocket'
+import React, { createContext, useContext, useState } from 'react'
 
 interface WebSocketContextType {
   status: WebSocketStatus
