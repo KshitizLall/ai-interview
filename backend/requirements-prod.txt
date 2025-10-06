@@ -1,27 +1,78 @@
-# Production requirements for Render deployment
-# Core FastAPI and web server
+# ============================================================================
+# Production Requirements for Render Deployment
+# ============================================================================
+# This file contains only the essential dependencies needed for production
+
+# Core FastAPI and Web Server
 fastapi==0.117.1
 uvicorn[standard]==0.36.0
 pydantic==2.11.9
 pydantic-settings==2.10.1
 
-# WebSocket support (explicitly needed for real-time features)
+# WebSocket support (Real-time features)
 websockets==12.0
 
-# File handling and multipart data
+# File Handling and Multipart Data
 python-multipart==0.0.20
 aiofiles==24.1.0
 
-# Document processing
+# Document Processing
 PyPDF2==3.0.1
 python-docx==1.2.0
 reportlab==4.4.4
 
-# OpenAI integration
+# AI Integration
 openai==1.108.1
 
-# Environment configuration
+# Database and Environment
 python-dotenv==1.1.1
+motor==3.7.1
+pymongo==4.15.2
 
-# Production server
+# Authentication and Security (CRITICAL - DO NOT REMOVE)
+passlib[bcrypt]==1.7.4
+bcrypt==4.2.0
+PyJWT==2.10.1
+cryptography==44.0.0
+
+# Rate Limiting and Protection
+slowapi==0.1.9
+limits==3.13.0
+redis==7.0.0b2
+deprecated==1.2.18
+importlib-resources==6.5.2
+wrapt==1.17.3
+
+# Input Validation and Security
+email-validator==2.2.0
+zxcvbn==4.4.28
+
+# Additional Security Tools
+fastapi-limiter==0.1.6
+
+# Core Dependencies (Required by above packages)
+anyio==4.11.0
+certifi==2025.10.5
+charset-normalizer==3.4.3
+click==8.3.0
+dnspython==2.8.0
+h11==0.16.0
+httpcore==1.0.9
+httptools==0.6.4
+httpx==0.28.1
+idna==3.10
+jiter==0.11.0
+lxml==6.0.2
+packaging==25.0
+pillow==11.3.0
+pydantic-core==2.33.2
+sniffio==1.3.1
+starlette==0.48.0
+tqdm==4.67.1
+typing-extensions==4.15.0
+typing-inspection==0.4.2
+uvloop==0.21.0
+watchfiles==1.1.0
+
+# Production Server
 gunicorn==23.0.0
