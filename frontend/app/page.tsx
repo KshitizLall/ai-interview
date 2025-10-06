@@ -494,17 +494,6 @@ export default function HomePage() {
                     </div>
                   </div>
                 </div>
-              
-              {/* Get Started Button */}
-              <div className="flex justify-center">
-                <Button 
-                  onClick={() => setShowInputs(true)} 
-                  size="lg"
-                  className="px-8 py-3 text-lg font-medium"
-                >
-                  Get Started
-                </Button>
-              </div>
             </div>
           ) : (
             <OutputsPane

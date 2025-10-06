@@ -34,10 +34,6 @@ export default function RootLayout({
           richColors
           toastOptions={{
             duration: 4000,
-            style: {
-              color: 'hsl(var(--foreground))',
-              border: '1px solid hsl(var(--border))',
-            },
           }}
         />
         <Analytics />

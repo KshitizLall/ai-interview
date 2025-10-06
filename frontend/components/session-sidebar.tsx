@@ -413,7 +413,21 @@ export function SessionSidebar({
                                 </Badge>
                               )}
                               <span className="text-xs text-muted-foreground/60 ml-auto">
-                                {formatDistanceToNow(new Date(session.updated_at), { addSuffix: true }).replace('about ', '').replace(' ago', '')}
+                                {(() => {
+                                  const now = new Date()
+                                  const sessionDate = new Date(session.updated_at)
+                                  const diffInMinutes = Math.floor((now.getTime() - sessionDate.getTime()) / (1000 * 60))
+                                  
+                                  if (diffInMinutes < 1) return 'now'
+                                  if (diffInMinutes < 60) return `${diffInMinutes}m`
+                                  if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h`
+                                  if (diffInMinutes < 10080) return `${Math.floor(diffInMinutes / 1440)}d`
+                                  return sessionDate.toLocaleDateString('en-GB', { 
+                                    day: '2-digit', 
+                                    month: '2-digit',
+                                    year: '2-digit'
+                                  })
+                                })()}
                               </span>
                             </div>
                           </div>

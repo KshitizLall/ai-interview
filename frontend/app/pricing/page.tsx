@@ -16,17 +16,18 @@ const pricingPlans = [
   {
     name: "Free",
     icon: Star,
-    price: "$0",
+    price: "₹0",
     period: "forever",
     description: "Perfect for getting started with basic interview prep",
     features: [
-      { name: "5 AI-generated questions per month", included: true },
-      { name: "Basic answer suggestions", included: true },
+      { name: "10 AI questions per month (anonymous)", included: true },
+      { name: "10 AI answers per month (anonymous)", included: true },
       { name: "Resume text extraction", included: true },
+      { name: "Basic question types & difficulty levels", included: true },
       { name: "Export to PDF", included: false },
       { name: "Bulk answer generation", included: false },
+      { name: "Save interview sessions", included: false },
       { name: "Priority support", included: false },
-      { name: "Advanced question analytics", included: false },
     ],
     cta: "Get Started Free",
     popular: false,
@@ -34,37 +35,39 @@ const pricingPlans = [
   {
     name: "Professional",
     icon: Zap,
-    price: "$19",
+    price: "₹199",
     period: "per month",
-    description: "Ideal for active job seekers and career changers",
+    description: "For serious job seekers who need comprehensive preparation",
     features: [
-      { name: "Unlimited AI-generated questions", included: true },
+      { name: "200 credits per month (signup bonus)", included: true },
+      { name: "Unlimited AI questions & answers", included: true },
       { name: "Advanced answer optimization", included: true },
-      { name: "Resume text extraction", included: true },
-      { name: "Export to PDF", included: true },
-      { name: "Bulk answer generation", included: true },
-      { name: "Email support", included: true },
+      { name: "Bulk answer generation (4 styles)", included: true },
+      { name: "Premium PDF export with tips", included: true },
+      { name: "Save & manage interview sessions", included: true },
       { name: "Question relevance scoring", included: true },
+      { name: "Email support", included: true },
     ],
     cta: "Start Professional",
     popular: true,
   },
   {
-    name: "Enterprise",
+    name: "Power User",
     icon: Crown,
-    price: "$49",
+    price: "₹399",
     period: "per month",
-    description: "For teams and organizations preparing multiple candidates",
+    description: "For frequent job seekers and career coaches",
     features: [
+      { name: "1000 credits per month", included: true },
       { name: "Everything in Professional", included: true },
-      { name: "Team collaboration tools", included: true },
-      { name: "Custom question templates", included: true },
-      { name: "Advanced analytics dashboard", included: true },
-      { name: "Priority phone support", included: true },
-      { name: "SSO integration", included: true },
-      { name: "Custom integrations", included: true },
+      { name: "Priority question generation", included: true },
+      { name: "Advanced PDF customization", included: true },
+      { name: "Session analytics & insights", included: true },
+      { name: "Priority email support", included: true },
+      { name: "Multiple resume profiles", included: true },
+      { name: "Extended session history", included: true },
     ],
-    cta: "Contact Sales",
+    cta: "Upgrade Now",
     popular: false,
   },
 ]
@@ -154,12 +157,12 @@ export default function PricingPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Is there a free trial?</CardTitle>
+                <CardTitle className="text-lg">How does the credit system work?</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Our free plan gives you a taste of our AI-powered features. You can try
-                  professional features with our 7-day money-back guarantee.
+                  Each AI question or answer generation costs 1 credit. New signups get 50 free credits!
+                  Unused credits roll over monthly. All prices include GST as applicable in India.
                 </p>
               </CardContent>
             </Card>
@@ -170,8 +173,8 @@ export default function PricingPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  We accept all major credit cards (Visa, MasterCard, American Express)
-                  and PayPal. Enterprise customers can pay by invoice.
+                  We accept UPI, net banking, credit/debit cards (Visa, MasterCard, RuPay),
+                  and digital wallets like Paytm, PhonePe. Enterprise customers can pay by invoice.
                 </p>
               </CardContent>
             </Card>
@@ -182,37 +185,46 @@ export default function PricingPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Yes! Students get 50% off the Professional plan. Contact our support team
-                  with your valid student ID to apply the discount.
+                  Yes! Students get 50% off the Professional plan (₹99/month). Contact our support team
+                  with your valid college ID or enrollment certificate to apply the discount.
                 </p>
               </CardContent>
             </Card>
           </div>
         </div>
 
-        {/* Enterprise CTA */}
+        {/* Credit System Explanation */}
         <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg p-8 text-center">
-          <h2 className="text-2xl font-bold mb-4">Need a Custom Solution?</h2>
+          <h2 className="text-2xl font-bold mb-4">How Our Credit System Works</h2>
           <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-            We work with organizations of all sizes to provide customized interview preparation
-            solutions. Get in touch to discuss volume pricing and enterprise features.
+            Every question generation and AI answer costs 1 credit. New users get 50 free credits upon signup!
+            No wastage - unused credits roll over. All pricing includes applicable GST for Indian users.
           </p>
-          <div className="flex gap-4 justify-center">
-            <Button>
-              Contact Sales
-            </Button>
-            <Button variant="outline">
-              Schedule Demo
-            </Button>
+          <div className="grid gap-4 md:grid-cols-3 max-w-2xl mx-auto text-sm">
+            <div className="bg-background/50 rounded-lg p-4">
+              <div className="font-semibold text-primary mb-2">1 Credit =</div>
+              <div className="text-muted-foreground">1 AI question OR 1 AI answer</div>
+            </div>
+            <div className="bg-background/50 rounded-lg p-4">
+              <div className="font-semibold text-primary mb-2">Free Features</div>
+              <div className="text-muted-foreground">PDF export, sessions, file upload</div>
+            </div>
+            <div className="bg-background/50 rounded-lg p-4">
+              <div className="font-semibold text-primary mb-2">Rollover</div>
+              <div className="text-muted-foreground">Unused credits carry forward</div>
+            </div>
           </div>
         </div>
 
         {/* Money Back Guarantee */}
-        <div className="text-center">
+        <div className="text-center space-y-3">
           <div className="inline-flex items-center gap-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 px-4 py-2 rounded-full text-sm">
             <Check className="h-4 w-4" />
-            7-day money-back guarantee on all paid plans
+            7-day money-back guarantee • Try risk-free
           </div>
+          <p className="text-sm text-muted-foreground">
+            All prices in Indian Rupees (₹) including GST. Made in India for Indian job seekers. Credit system ensures fair usage.
+          </p>
         </div>
       </ContentSection>
     </PageLayout>

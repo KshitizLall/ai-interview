@@ -65,10 +65,10 @@ export default function ContactPage() {
                   General inquiries and support
                 </p>
                 <a
-                  href="mailto:support@interviewbot.com"
+                  href="mailto:support@interviewbot.in"
                   className="text-sm font-medium text-primary hover:underline"
                 >
-                  support@interviewbot.com
+                  support@interviewbot.in
                 </a>
               </CardContent>
             </Card>
@@ -85,10 +85,10 @@ export default function ContactPage() {
                   Phone support available
                 </p>
                 <a
-                  href="tel:+1-555-0123"
+                  href="tel:+91-9876543210"
                   className="text-sm font-medium text-primary hover:underline"
                 >
-                  +1 (555) 012-3456
+                  +91 98765-43210
                 </a>
               </CardContent>
             </Card>
@@ -103,11 +103,15 @@ export default function ContactPage() {
               <CardContent className="space-y-1">
                 <div className="text-sm">
                   <span className="font-medium">Mon - Fri:</span>
-                  <span className="text-muted-foreground ml-2">9:00 AM - 6:00 PM EST</span>
+                  <span className="text-muted-foreground ml-2">9:00 AM - 7:00 PM IST</span>
                 </div>
                 <div className="text-sm">
-                  <span className="font-medium">Weekend:</span>
-                  <span className="text-muted-foreground ml-2">10:00 AM - 4:00 PM EST</span>
+                  <span className="font-medium">Saturday:</span>
+                  <span className="text-muted-foreground ml-2">10:00 AM - 5:00 PM IST</span>
+                </div>
+                <div className="text-sm">
+                  <span className="font-medium">Sunday:</span>
+                  <span className="text-muted-foreground ml-2">Closed</span>
                 </div>
               </CardContent>
             </Card>
@@ -121,9 +125,10 @@ export default function ContactPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  123 Innovation Drive<br />
-                  Tech Valley, CA 94025<br />
-                  United States
+                  WeWork Galaxy, 43<br />
+                  Residency Road, Shanthala Nagar<br />
+                  Bengaluru, Karnataka 560025<br />
+                  India
                 </p>
               </CardContent>
             </Card>

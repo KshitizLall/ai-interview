@@ -23,8 +23,8 @@ export default function PrivacyPage() {
         <Alert>
           <Shield className="h-4 w-4" />
           <AlertDescription>
-            <strong>Last Updated:</strong> September 24, 2025. We may update this policy from time to time.
-            We'll notify you of any material changes via email or through our service.
+            <strong>Last Updated:</strong> October 6, 2025. This policy complies with Indian data protection laws
+            including the IT Act 2000 and Digital Personal Data Protection Act 2023. We'll notify you of changes as per Indian legal requirements.
           </AlertDescription>
         </Alert>
 
@@ -41,8 +41,8 @@ export default function PrivacyPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-green-700 dark:text-green-300">
-                  Your resume content and personal information are encrypted and stored securely.
-                  We never sell or share your data with third parties.
+                  Your data is stored securely within India as per data localization requirements.
+                  We comply with Indian privacy laws and never sell your personal information.
                 </p>
               </CardContent>
             </Card>
@@ -81,8 +81,10 @@ export default function PrivacyPage() {
                 <ul className="text-sm space-y-1 ml-4">
                   <li>• Name and email address</li>
                   <li>• Password (encrypted and hashed)</li>
+                  <li>• Phone number (optional, for OTP verification)</li>
                   <li>• Profile preferences and settings</li>
-                  <li>• Subscription and billing information</li>
+                  <li>• Payment details (processed through Indian payment gateways)</li>
+                  <li>• GST information (for business subscriptions)</li>
                 </ul>
               </CardContent>
             </Card>
@@ -205,8 +207,8 @@ export default function PrivacyPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  We work with trusted third-party services (cloud hosting, email, analytics)
-                  that help us operate our platform. They're bound by strict confidentiality agreements.
+                  We work with Indian and international service providers (cloud hosting in India, payment gateways like Razorpay,
+                  analytics) that comply with Indian data protection laws and are bound by strict confidentiality agreements.
                 </p>
               </CardContent>
             </Card>
@@ -217,8 +219,8 @@ export default function PrivacyPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  We may disclose information if required by law, court order, or to protect
-                  the rights, safety, and security of our users and the public.
+                  We may disclose information as required by Indian laws, court orders from Indian courts,
+                  or regulatory authorities like CERT-In, to protect rights, safety, and security of users and public interest.
                 </p>
               </CardContent>
             </Card>
@@ -281,8 +283,8 @@ export default function PrivacyPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Request deletion of your account and all associated data.
-                  Some information may be retained for legal or security purposes.
+                  Request deletion of your account and data as per DPDP Act 2023 rights.
+                  Some data may be retained as required by Indian laws (IT Act, GST Act, etc.).
                 </p>
               </CardContent>
             </Card>
@@ -361,12 +363,18 @@ export default function PrivacyPage() {
               <div className="space-y-2">
                 <p className="text-sm">
                   <strong>Email:</strong>{" "}
-                  <a href="mailto:privacy@interviewbot.com" className="text-primary hover:underline">
-                    privacy@interviewbot.com
+                  <a href="mailto:privacy@interviewbot.in" className="text-primary hover:underline">
+                    privacy@interviewbot.in
                   </a>
                 </p>
                 <p className="text-sm">
-                  <strong>Address:</strong> 123 Innovation Drive, Tech Valley, CA 94025
+                  <strong>Data Protection Officer:</strong>{" "}
+                  <a href="mailto:dpo@interviewbot.in" className="text-primary hover:underline">
+                    dpo@interviewbot.in
+                  </a>
+                </p>
+                <p className="text-sm">
+                  <strong>Address:</strong> InterviewBot India Pvt Ltd, India
                 </p>
               </div>
 
