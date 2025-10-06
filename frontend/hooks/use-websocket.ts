@@ -20,6 +20,7 @@ export interface UseWebSocketOptions {
   reconnect?: boolean
   reconnectInterval?: number
   maxReconnectAttempts?: number
+  enabled?: boolean
   onOpen?: () => void
   onClose?: () => void
   onError?: (error: Event) => void
@@ -37,6 +38,7 @@ export function useWebSocket(options: UseWebSocketOptions) {
     reconnect = true,
     reconnectInterval = 3000,
     maxReconnectAttempts = 5,
+    enabled = true,
     onOpen,
     onClose,
     onError,
@@ -219,12 +221,16 @@ export function useWebSocket(options: UseWebSocketOptions) {
 
   // Auto-connect on mount and cleanup on unmount
   useEffect(() => {
-    connect()
+    if (enabled) {
+      connect()
+    } else {
+      setStatus('disconnected')
+    }
 
     return () => {
       disconnect()
     }
-  }, []) // Remove dependencies to prevent constant reconnections
+  }, [enabled]) // Connect when enabled changes
 
   // Ping periodically to keep connection alive
   useEffect(() => {

@@ -23,8 +23,8 @@ export default function TermsPage() {
         <Alert>
           <FileText className="h-4 w-4" />
           <AlertDescription>
-            <strong>Effective Date:</strong> September 24, 2025. By using our service, you agree to these terms.
-            We may update these terms from time to time and will notify you of significant changes.
+            <strong>Effective Date:</strong> October 6, 2025. By using InterviewBot services in India, you agree to these terms.
+            We comply with Indian data protection and consumer laws. Updates will be notified as per Indian legal requirements.
           </AlertDescription>
         </Alert>
 
@@ -113,8 +113,8 @@ export default function TermsPage() {
                 <div>
                   <h4 className="font-semibold text-sm mb-1">Age Requirement</h4>
                   <p className="text-sm text-muted-foreground">
-                    You must be at least 16 years old to use this Service. Users under 18 must have
-                    parental consent.
+                    You must be at least 18 years old to use this Service independently. Users under 18 require
+                    parental/guardian consent as per Indian law.
                   </p>
                 </div>
               </CardContent>
@@ -173,15 +173,15 @@ export default function TermsPage() {
                 <div>
                   <h4 className="font-semibold text-sm mb-1">Billing Cycle</h4>
                   <p className="text-sm text-muted-foreground">
-                    Subscriptions are billed monthly or annually in advance. Your subscription will automatically
-                    renew unless cancelled before the renewal date.
+                    Subscriptions are billed monthly in Indian Rupees (₹) including applicable GST.
+                    Automatic renewal occurs unless cancelled 24 hours before the renewal date.
                   </p>
                 </div>
                 <div>
                   <h4 className="font-semibold text-sm mb-1">Price Changes</h4>
                   <p className="text-sm text-muted-foreground">
-                    We reserve the right to modify our pricing with 30 days' notice.
-                    Existing subscribers will be notified via email.
+                    Pricing changes require 30 days' advance notice as per Indian consumer protection laws.
+                    GST rates may change as per Government of India regulations.
                   </p>
                 </div>
                 <div>
@@ -341,17 +341,17 @@ export default function TermsPage() {
               <div className="space-y-2">
                 <p className="text-sm">
                   <strong>Email:</strong>{" "}
-                  <a href="mailto:legal@interviewbot.com" className="text-primary hover:underline">
-                    legal@interviewbot.com
+                  <a href="mailto:legal@interviewbot.in" className="text-primary hover:underline">
+                    legal@interviewbot.in
                   </a>
                 </p>
                 <p className="text-sm">
-                  <strong>Address:</strong> InterviewBot, 123 Innovation Drive, Tech Valley, CA 94025
+                  <strong>Address:</strong> InterviewBot India Pvt Ltd, India
                 </p>
                 <p className="text-sm">
                   <strong>Phone:</strong>{" "}
-                  <a href="tel:+1-555-0123" className="text-primary hover:underline">
-                    +1 (555) 012-3456
+                  <a href="tel:+91-9876543210" className="text-primary hover:underline">
+                    +91 98765-43210
                   </a>
                 </p>
               </div>
@@ -371,9 +371,9 @@ export default function TermsPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                These Terms are governed by and construed in accordance with the laws of the State of California,
-                without regard to conflict of law principles. Any disputes arising from these Terms will be
-                resolved in the courts of California.
+                These Terms are governed by the laws of India, including the Information Technology Act, 2000,
+                Consumer Protection Act, 2019, and other applicable Indian laws. Any disputes will be subject to
+                the exclusive jurisdiction of courts in Bengaluru, Karnataka, India.
               </p>
             </CardContent>
           </Card>

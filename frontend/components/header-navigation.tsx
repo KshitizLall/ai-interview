@@ -2,13 +2,6 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { FileText, Menu, X } from "lucide-react"
 import { useState } from "react"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 
 export function HeaderNavigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -46,35 +39,11 @@ export function HeaderNavigation() {
               Contact
             </Link>
 
-            {/* More Menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  More
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link href="/privacy">Privacy Policy</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/terms">Terms & Conditions</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/refund">Refund Policy</Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </nav>
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-3">
-            <Button variant="outline" size="sm">
-              Sign In
-            </Button>
-            <Button size="sm">
-              Get Started
-            </Button>
+            {/* Authentication buttons removed */}
           </div>
 
           {/* Mobile Menu Button */}
@@ -137,12 +106,7 @@ export function HeaderNavigation() {
                 </Link>
               </div>
               <div className="flex gap-3 pt-4 border-t border-border/40">
-                <Button variant="outline" size="sm" className="flex-1">
-                  Sign In
-                </Button>
-                <Button size="sm" className="flex-1">
-                  Get Started
-                </Button>
+                {/* Authentication buttons removed */}
               </div>
             </nav>
           </div>

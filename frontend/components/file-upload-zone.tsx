@@ -143,7 +143,7 @@ export function FileUploadZone({
         {!isTextArea && (
           <div
             className={cn(
-              "relative border-2 border-dashed rounded-lg p-4 md:p-8 text-center transition-all duration-300",
+              "relative border-2 border-dashed rounded-lg p-4 md:p-8 text-center transition-all duration-300 min-h-[200px] flex items-center justify-center",
               isDragOver
                 ? "border-primary bg-primary/5 scale-105 shadow-lg animate-pulse-glow"
                 : "border-muted-foreground/25 hover:border-muted-foreground/50",
@@ -202,7 +202,7 @@ export function FileUploadZone({
               placeholder="Paste your job description here..."
               value={text}
               onChange={(e) => setText(e.target.value)}
-              className="min-h-[200px] resize-none"
+              className="h-[200px] resize-none overflow-y-auto scrollbar-thin scrollbar-thumb-border/30 scrollbar-track-transparent"
             />
             <p className="text-xs text-muted-foreground">
               {text.length} characters • {Math.ceil(text.length / 4)} words (estimated)

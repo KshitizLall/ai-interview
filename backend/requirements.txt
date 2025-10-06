@@ -1,23 +1,51 @@
-# Core FastAPI and web server
+# ============================================================================
+# InterviewBot Backend Dependencies - Updated for Enhanced Security
+# ============================================================================
+
+# Core FastAPI and Web Server
 fastapi==0.117.1
 uvicorn[standard]==0.36.0
 pydantic==2.11.9
 pydantic-settings==2.10.1
 
-# WebSocket support (explicitly needed for real-time features)
+# WebSocket Support (Real-time features)
 websockets==12.0
 
-# File handling and multipart data
+# File Handling and Multipart Data
 python-multipart==0.0.20
 aiofiles==24.1.0
 
-# Document processing
+# Document Processing
 PyPDF2==3.0.1
 python-docx==1.2.0
 reportlab==4.4.4
 
-# OpenAI integration
+# AI Integration
 openai==1.108.1
 
-# Environment configuration
+# Database and Environment
 python-dotenv==1.1.1
+motor==3.7.1
+
+# Authentication and Security (Enhanced)
+passlib[bcrypt]==1.7.4
+bcrypt==4.2.0
+PyJWT==2.10.1                # Modern JWT library (secure replacement for python-jose)
+cryptography==44.0.0         # Cryptographic functions for JWT security
+
+# Rate Limiting and Protection
+slowapi==0.1.9               # FastAPI rate limiting middleware
+limits==3.13.0               # Rate limiting storage backend
+redis==7.0.0b2               # Redis support for distributed rate limiting (optional)
+
+# Input Validation and Security
+email-validator==2.2.0       # Enhanced email validation
+zxcvbn==4.4.28               # Advanced password strength validation
+
+# Additional Security Tools
+fastapi-limiter==0.1.6       # Alternative rate limiting implementation
+
+# Development and Testing (Optional - uncomment for development)
+# pytest==7.4.3
+# pytest-asyncio==0.21.1
+# httpx==0.27.0              # For testing API endpoints
