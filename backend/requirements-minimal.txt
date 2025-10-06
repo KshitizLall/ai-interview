@@ -36,3 +36,8 @@ openai==1.108.1
 
 # Production Server
 gunicorn==23.0.0
+
+# Required dependencies (to avoid conflicts)
+deprecated==1.2.18
+importlib-resources==6.5.2
+wrapt==1.17.3
